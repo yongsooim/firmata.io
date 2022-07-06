@@ -1,22 +1,13 @@
 <script lang="ts">
   import logo from './assets/svelte.png'
   import Counter from './lib/Counter.svelte'
+  import PortRequest from './lib/PortRequest.svelte'
 
-  console.log(navigator.serial)
-
-  function req() {
-    navigator.serial.requestPort().then(port => {
-      console.log(port)
-    })
-  }
 </script>
 
 <main>
 
-  <button on:click={req}>
-    Port Request
-  </button>
-  
+  <PortRequest />
   <Counter />
 
   <p>
@@ -42,21 +33,6 @@
     margin: 0 auto;
   }
 
-  img {
-    height: 16rem;
-    width: 16rem;
-  }
-
-  h1 {
-    color: #ff3e00;
-    text-transform: uppercase;
-    font-size: 4rem;
-    font-weight: 100;
-    line-height: 1.1;
-    margin: 2rem auto;
-    max-width: 14rem;
-  }
-
   p {
     max-width: 14rem;
     margin: 1rem auto;
@@ -64,10 +40,6 @@
   }
 
   @media (min-width: 480px) {
-    h1 {
-      max-width: none;
-    }
-
     p {
       max-width: none;
     }
