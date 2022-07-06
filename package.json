@@ -28,7 +28,9 @@
     "events": "^3.3.0",
     "johnny-five": "^2.1.0",
     "process": "^0.11.10",
+    "rxjs": "^7.5.5",
     "serialport": "^10.4.0",
-    "serialport-binding-webserialapi": "^1.0.3"
+    "serialport-binding-webserialapi": "^1.0.3",
+    "sveltestrap": "^5.9.0"
   }
 }

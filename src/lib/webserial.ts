@@ -21,15 +21,15 @@ class WebSerial {
     init(port: SerialPort): void {
       if(port) {
         this.writer = port.writable.getWriter()
-        //this.reader = port.readable.getReader()
+        this.reader = port.readable.getReader()
+        
+        let td = new TextDecoderStream()
+
         this.port = port
         this.isOpen = true
-        console.log('open')
-
-        
       }
       
-      //this.loop()
+      this.loop()
     }
     
     async loop() {

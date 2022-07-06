@@ -1,30 +1,61 @@
 <script lang="ts">
-  import logo from './assets/svelte.png'
-  import Counter from './lib/Counter.svelte'
-  import PortRequest from './lib/PortRequest.svelte'
-
+  import Counter from "./lib/Counter.svelte"
+  import PortRequest from "./lib/PortRequest.svelte"
+  import { Styles, Button, Row, Col } from "sveltestrap"
 </script>
 
 <main>
+  <Styles />
 
-  <PortRequest />
-  <Counter />
+  <Row class='bottom-buffer border'>
+    <Col>
+      Simluator
+    </Col>
+  </Row>
+  <Row class='bottom-buffer border'>
 
-  <p>
-    Visit <a href="https://svelte.dev">svelte.dev</a> to learn how to build Svelte
-    apps.
-  </p>
+    <Col class = 'border'>
+      Sidebar
+    </Col>
+    <Col class = 'border'>
+    <Row class='bottom-buffer border'>
+      <Col>
+        <PortRequest />
+      </Col>
+    </Row>
+    <Row class='bottom-buffer border'>
+      <Col>
+        <Counter />
+      </Col>
+    </Row>
+    <Row class='bottom-buffer border'>
+      <Col>
+        <Button color="primary">asdasdl</Button>
+      </Col>
+    </Row>
+    <Row class = 'bottom-buffer border'>
+      <p>
+        Visit <a href="https://svelte.dev">svelte.dev</a> to learn how to build Svelte
+        apps.
+      </p>
 
-  <p>
-    Check out <a href="https://github.com/sveltejs/kit#readme">SvelteKit</a> for
-    the officially supported framework, also powered by Vite!
-  </p>
+      <p>
+        Check out <a href="https://github.com/sveltejs/kit#readme">SvelteKit</a> for
+        the officially supported framework, also powered by Vite!
+      </p>
+    </Row>
+    </Col>
+
+  </Row>
+  <Row>
+    Footer
+  </Row>
 </main>
 
 <style>
   :root {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-      Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+      Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   }
 
   main {
