@@ -5,7 +5,7 @@
 * The firmware version will not always equal the protocol version going forward.
 * Query using the REPORT_FIRMWARE message.
 */
-enum FirmwareVersion {
+export enum FirmwareVersion {
     FIRMWARE_MAJOR_VERSION =  2,
     FIRMWARE_MINOR_VERSION =  5,
     FIRMWARE_BUGFIX_VERSION = 7,
@@ -15,14 +15,14 @@ enum FirmwareVersion {
 * version numbers are important.
 * Query using the REPORT_VERSION message.
 */
-enum ProtocolVersion {
+export enum ProtocolVersion {
     PROTOCOL_MAJOR_VERSION =  2, // for non-compatible changes
     PROTOCOL_MINOR_VERSION =  5, // for backwards compatible changes
     PROTOCOL_BUGFIX_VERSION = 1, // for bugfix releases
 }
 
 /** message command bytes (128-255/0x80-0xFF) */
-enum CommandByte {
+export enum CommandByte {
     DIGITAL_MESSAGE =         0x90, // send data for a digital port (collection of 8 pins)
     ANALOG_MESSAGE =          0xE0, // send data for an analog pin (or PWM)
     REPORT_ANALOG =           0xC0, // enable analog input by pin #
@@ -38,7 +38,7 @@ enum CommandByte {
     END_SYSEX =               0xF7, // end a MIDI Sysex message
 }
 
-enum ExtendedCommandByte {
+export enum ExtendedCommandByte {
     SERIAL_DATA =             0x60, // communicate with serial devices, including other boards
     ENCODER_DATA =            0x61, // reply with encoders current positions
     SERVO_CONFIG =            0x70, // set max angle, minPulse, maxPulse, freq
@@ -63,7 +63,7 @@ enum ExtendedCommandByte {
     SYSEX_REALTIME =          0x7F, // MIDI Reserved for realtime messages
 }
 
-enum PinMode {
+export enum PinMode {
     PIN_MODE_INPUT =          0x00, // same as INPUT defined in Arduino.h
     PIN_MODE_OUTPUT =         0x01, // same as OUTPUT defined in Arduino.h
     PIN_MODE_ANALOG =         0x02, // analog pin in analogInput mode
