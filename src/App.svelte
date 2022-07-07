@@ -1,6 +1,5 @@
 <script lang="ts">
-  import Counter from "./lib/Counter.svelte"
-  import PortRequest from "./lib/PortRequest.svelte"
+  import Serial from "./lib/Serial.svelte"
   import { Styles, Button, Row, Col } from "sveltestrap"
 </script>
 
@@ -20,12 +19,7 @@
     <Col class = 'border'>
     <Row class='bottom-buffer border'>
       <Col>
-        <PortRequest />
-      </Col>
-    </Row>
-    <Row class='bottom-buffer border'>
-      <Col>
-        <Counter />
+        <Serial />
       </Col>
     </Row>
     <Row class='bottom-buffer border'>
