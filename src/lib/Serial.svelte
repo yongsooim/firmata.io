@@ -4,16 +4,9 @@
   import { tapOnFirstEmit, fromWebSerial } from "@rxjs-ninja/rxjs-utility";
 
   import * as rxjs from "rxjs";
-  import { Styles, Button } from 'sveltestrap';
+  import { Styles, Button, Col, Row } from 'sveltestrap';
   import { onMount } from 'svelte';
-
-  import { parseIntelHex } from './intel-hex'
-  fetch('../src/hex/StandardFirmata.hex').then(res => res.arrayBuffer()).then(data => {
-    console.log(parseIntelHex(data, 65536))
-
-  });
-
-
+  
   let startButton : HTMLButtonElement;
   let writeButton : HTMLButtonElement;
   const sendButton = document.getElementById("send");
@@ -41,7 +34,9 @@
 
   let port: SerialPort
   
-  onMount(() => {
+
+  onMount(async () => {
+
     fromEvent(startButton, "click")
     .pipe(
       tap(async () => {
@@ -66,17 +61,30 @@
   
   async function startConnection() {
     endCtrl = new AbortController();
+
+
     port = await navigator.serial.requestPort();
+    
+
+    
+    port.onconnect =  (event) => {
+      console.log(event)
+      resetArduino(port)
+      console.log('?')
+    }
+
 
     /**
      * Pass out port, input and signal for ending the connection
      */
-    fromWebSerial(port, sendMessage$.asObservable(), { baudRate: 9600 }, endCtrl.signal)
+    fromWebSerial(port, sendMessage$.asObservable(), { baudRate: 115200 }, endCtrl.signal)
       .pipe(
+        
         tapOnFirstEmit(async () => {
           console.log("Connected to Serial Device");
         }),
         tap(value => {
+
           console.log(value + ' received')
         }),
         delay(1000),
@@ -95,13 +103,23 @@
     await port.setSignals({ requestToSend: true });
   }
 
+
+
 </script>
 <Styles />
 
-<button class='btn btn-primary' bind:this={startButton} >
-  start
-</button>
+<Row>
+  <Col class='border'>
+    sidebar
+  </Col>
 
-<button class='btn btn-primary' bind:this={writeButton} >
-  write
-</button>
+  <Col>
+    <button class='btn btn-primary' bind:this={startButton} >
+      start
+    </button>
+
+    <button class='btn btn-primary' bind:this={writeButton} >
+      write
+    </button>
+  </Col>
+</Row>

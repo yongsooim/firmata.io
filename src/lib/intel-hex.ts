@@ -1,5 +1,6 @@
 import Buffer from 'buffer'
 
+const buffer = Buffer.Buffer
 //Intel Hex record types
 const DATA = 0,
 	END_OF_FILE = 1,
@@ -23,8 +24,8 @@ const EMPTY_VALUE = 0xFF;
 			start linear address record; null, if not given
 	Special thanks to: http://en.wikipedia.org/wiki/Intel_HEX
 */
-export function parseIntelHex(data: any, bufferSize: number) {
-	data = data.toString("ascii");
+export function parseIntelHex(raw: ArrayBuffer, bufferSize: number) {
+	const data = new TextDecoder().decode(raw)
 	//Initialization
 	var buf = buffer.alloc(bufferSize || 8192),
 		bufLength = 0, //Length of data in the buffer
@@ -43,20 +44,20 @@ export function parseIntelHex(data: any, bufferSize: number) {
 		else
 			lineNum++;
 		//Number of bytes (hex digit pairs) in the data field
-		var dataLength = parseInt(data.substr(pos, 2), 16);
+		var dataLength = parseInt(data.substring(pos, pos + 2), 16);
 		pos += 2;
 		//Get 16-bit address (big-endian)
-		var lowAddress = parseInt(data.substr(pos, 4), 16);
+		var lowAddress = parseInt(data.substring(pos, pos + 4), 16);
 		pos += 4;
 		//Record type
-		var recordType = parseInt(data.substr(pos, 2), 16);
+		var recordType = parseInt(data.substring(pos, pos + 2), 16);
 		pos += 2;
 		//Data field (hex-encoded string)
-		var dataField = data.substr(pos, dataLength * 2),
-			dataFieldBuf = Buffer.from(dataField, "hex");
+		var dataField = data.substring(pos, pos + dataLength * 2),
+			dataFieldBuf = buffer.from(dataField, "hex");
 		pos += dataLength * 2;
 		//Checksum
-		var checksum = parseInt(data.substr(pos, 2), 16);
+		var checksum = parseInt(data.substring(pos, pos + 2), 16);
 		pos += 2;
 		//Validate checksum
 		var calcChecksum = (dataLength + (lowAddress >> 8) +
@@ -75,7 +76,7 @@ export function parseIntelHex(data: any, bufferSize: number) {
 				//Expand buf, if necessary
 				if(absoluteAddress + dataLength >= buf.length)
 				{
-					var tmp = Buffer.alloc((absoluteAddress + dataLength) * 2);
+					var tmp = buffer.alloc((absoluteAddress + dataLength) * 2);
 					buf.copy(tmp, 0, 0, bufLength);
 					buf = tmp;
 				}

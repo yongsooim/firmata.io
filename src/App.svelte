@@ -14,9 +14,6 @@
   <Row class='bottom-buffer border'>
 
     <Col class = 'border'>
-      Sidebar
-    </Col>
-    <Col class = 'border'>
     <Row class='bottom-buffer border'>
       <Col>
         <Serial />
