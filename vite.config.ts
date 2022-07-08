@@ -6,16 +6,8 @@ import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfil
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  build: {
-    commonjsOptions: {
-      include: ['./node_modules/avrgirl-arduino/dist/avrgirl-arduino.global.js'],
-    }
-  },
   plugins: [
     svelte(),
-    viteCommonjs({
-      include: ['./node_modules/avrgirl-arduino/avrgirl-arduino-browser.js'],
-    }),
     viteStaticCopy({
       targets: [
         {
