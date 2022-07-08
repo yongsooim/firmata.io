@@ -27,7 +27,7 @@ const EMPTY_VALUE = 0xFF;
 export function parseIntelHex(raw: ArrayBuffer, bufferSize: number) {
 	const data = new TextDecoder().decode(raw)
 	//Initialization
-	var buf = buffer.alloc(bufferSize || 8192),
+	let buf = buffer.alloc(bufferSize || 8192),
 		bufLength = 0, //Length of data in the buffer
 		highAddress = 0, //upper address
 		startSegmentAddress = null,
@@ -44,25 +44,25 @@ export function parseIntelHex(raw: ArrayBuffer, bufferSize: number) {
 		else
 			lineNum++;
 		//Number of bytes (hex digit pairs) in the data field
-		var dataLength = parseInt(data.substring(pos, pos + 2), 16);
+		let dataLength = parseInt(data.substring(pos, pos + 2), 16);
 		pos += 2;
 		//Get 16-bit address (big-endian)
-		var lowAddress = parseInt(data.substring(pos, pos + 4), 16);
+		let lowAddress = parseInt(data.substring(pos, pos + 4), 16);
 		pos += 4;
 		//Record type
-		var recordType = parseInt(data.substring(pos, pos + 2), 16);
+		let recordType = parseInt(data.substring(pos, pos + 2), 16);
 		pos += 2;
 		//Data field (hex-encoded string)
-		var dataField = data.substring(pos, pos + dataLength * 2),
+		let dataField = data.substring(pos, pos + dataLength * 2),
 			dataFieldBuf = buffer.from(dataField, "hex");
 		pos += dataLength * 2;
 		//Checksum
-		var checksum = parseInt(data.substring(pos, pos + 2), 16);
+		let checksum = parseInt(data.substring(pos, pos + 2), 16);
 		pos += 2;
 		//Validate checksum
-		var calcChecksum = (dataLength + (lowAddress >> 8) +
+		let calcChecksum = (dataLength + (lowAddress >> 8) +
 			lowAddress + recordType) & 0xFF;
-		for(var i = 0; i < dataLength; i++)
+		for(let i = 0; i < dataLength; i++)
 			calcChecksum = (calcChecksum + dataFieldBuf[i]) & 0xFF;
 		calcChecksum = (0x100 - calcChecksum) & 0xFF;
 		if(checksum != calcChecksum)
@@ -72,11 +72,11 @@ export function parseIntelHex(raw: ArrayBuffer, bufferSize: number) {
 		switch(recordType)
 		{
 			case DATA:
-				var absoluteAddress = highAddress + lowAddress;
+				let absoluteAddress = highAddress + lowAddress;
 				//Expand buf, if necessary
 				if(absoluteAddress + dataLength >= buf.length)
 				{
-					var tmp = buffer.alloc((absoluteAddress + dataLength) * 2);
+					let tmp = buffer.alloc((absoluteAddress + dataLength) * 2);
 					buf.copy(tmp, 0, 0, bufLength);
 					buf = tmp;
 				}

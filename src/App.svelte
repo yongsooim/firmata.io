@@ -1,6 +1,8 @@
 <script lang="ts">
   import Serial from "./lib/Serial.svelte"
+  import SpreadSheet from "./lib/SpreadSheet.svelte"
   import { Styles, Button, Row, Col } from "sveltestrap"
+
 </script>
 
 <main>
@@ -39,6 +41,9 @@
 
   </Row>
   <Row>
+    <Col>
+      <SpreadSheet />
+    </Col>
     Footer
   </Row>
 </main>

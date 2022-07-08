@@ -23,10 +23,13 @@
   },
   "dependencies": {
     "@rxjs-ninja/rxjs-utility": "^5.1.2",
+    "@types/jspreadsheet-ce": "^4.7.3",
     "buffer": "^6.0.3",
     "intel-hex": "^0.1.2",
+    "jspreadsheet-ce": "^4.11.1",
     "rxjs": "^7.5.5",
     "serialport-binding-webserialapi": "^1.0.3",
+    "svelte-sheets": "^1.0.0",
     "sveltestrap": "^5.9.0"
   }
 }
