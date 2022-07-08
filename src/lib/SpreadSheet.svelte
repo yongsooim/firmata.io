@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Subject } from 'rxjs'    
-    import jspreadsheet from 'jspreadsheet-ce'
+    import type jspreadsheet from 'jspreadsheet-ce'
     import { onMount } from 'svelte'
 
 

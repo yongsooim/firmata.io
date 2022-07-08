@@ -2,7 +2,8 @@
   import { Styles, Row, Col} from "sveltestrap";
   import firmata from "./Firmata";
   import ws from "./WebSerial";
-
+  import {flash} from './avrgirl.js'
+  
   let received = []
   ws.responseReceived$.subscribe(data => {
     received = [...received, data.toString()]
@@ -18,21 +19,31 @@
   </Col>
 
   <Col>
-    <button class='btn btn-primary' onclick={()=>{ws.requestPort()}} >
+    <button class='btn btn-primary'  on:click={() => {ws.requestPort()}}>
       start
     </button>
 
-    <button class='btn btn-primary' onclick={()=>{firmata.toggleLed}} >
+    <button class='btn btn-primary' on:click={() => {firmata.toggleLed()}} >
       toggle led
     </button>
 
-    <button class='btn btn-primary' onclick={() => {firmata.reset()}} >
+    <button class='btn btn-primary' on:click={() => {firmata.readADC()}} >
+      read AD
+    </button>
+
+    <button class='btn btn-primary' on:click={() => {firmata.reset()}} >
       reset
     </button>
 
-    <button class='btn btn-primary' onclick={() => {ws.close()}} >
+    <button class='btn btn-primary' on:click={() => {ws.close()}} >
       close
     </button>
+
+    
+    <button class='btn btn-primary' on:click={() => {flash()}} >
+      flash
+    </button>
+
 
     <ul>
       {#each received as data}
