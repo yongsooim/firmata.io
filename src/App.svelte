@@ -10,7 +10,10 @@
 
   <Row class='bottom-buffer border'>
     <Col>
-      Simluator
+      Firmata.io, Fast prototyping on web browser. No need to download tools.
+    </Col>
+    <Col>
+
     </Col>
   </Row>
   <Row class='bottom-buffer border'>

@@ -14,10 +14,13 @@
      * of JS in `.svelte` files.
      */
     "allowJs": true,
-    "checkJs": true,
+    "checkJs": false,
     "isolatedModules": true,
     "skipLibCheck": true
   },
   "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte"],
+  "excludew": [
+    "./build/**/*" // This is what fixed it!
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

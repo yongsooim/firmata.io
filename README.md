@@ -1,6 +1,8 @@
-# Svelte + TS + Vite
+# firmata.io
 
-This template should help get you started developing with Svelte and TypeScript in Vite.
+No downloaded needed
+
+Combination of Avrgirl-arduino, RxJS, RxJS Ninja, Svelte, Bootstrap, TypeScript built with Vite.
 
 ## Recommended IDE Setup
 

@@ -2,7 +2,6 @@ import "./avrgirl-arduino.global.js"
 //import * as AvrgirlArduino from 'avrgirl-arduino/dist/avrgirl-arduino.global.js'
 //import injectDependencies from '../../node_modules/avrgirl-arduino/dist/avrgirl-arduino.global.js'
 //import * as AvrgirlArduino from 'avrgirl-arduino/avrgirl-arduino-browser.js'
-import Buffer from 'buffer'
 
 function getContent() {
     return new Promise(async (resolve, reject) => {
