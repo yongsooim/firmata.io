@@ -1,32 +1,35 @@
 <script lang="ts">
-  import { Styles, Row, Col} from "sveltestrap";
   import firmata from "./Firmata";
   import ws from "./WebSerial";
-  import {flash} from './Flash'
+  import { flash } from "./Flash";
+  import { Styles } from "sveltestrap";
+import { onMount } from "svelte";
   
   let received = []
   ws.responseReceived$.subscribe(data => {
     received = [...received, data.toString()]
   });
 
+
+
+  function startButtonClicked() {
+    ws.requestPort();
+  }
+
 </script>
+<Styles/>
+<div>
+  <div class='border'>
+    <div id = 'tweakpane'></div>
+  </div>
 
-<Styles />
-
-<Row>
-  <Col class='border'>
-    sidebar
-  </Col>
-
-  <Col>
-    <button class='btn btn-primary'  on:click={() => {ws.requestPort()}}>
+  <div>
+    <button id='startButton' class='btn btn-primary'>
       start
     </button>
 
-    <button class='btn btn-primary' on:click={() => {firmata.toggleLed()
+    <button id='toggleButton' class='btn btn-primary'>
       ws.list()
-      
-    }} >
       toggle led
     </button>
 
@@ -55,5 +58,5 @@
         </li>
       {/each}  
     </ul>
-  </Col>
-</Row>
+  </div>
+</div>

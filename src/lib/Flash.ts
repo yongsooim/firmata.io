@@ -1,19 +1,16 @@
 import "./avrgirl-arduino.global.js"
-//import * as AvrgirlArduino from 'avrgirl-arduino/dist/avrgirl-arduino.global.js'
-//import 'avrgirl-arduino/dist/avrgirl-arduino.global.js'
 import { boardLookupTable } from './boards';
 
 function getContent() {
     return new Promise<ArrayBuffer>(async (resolve, reject) => {
         try {
-          const res = await fetch(`./hex/StandardFirmata.hex`);
+          const res = await fetch(`./static/hex/StandardFirmata.hex`);
           resolve(res.arrayBuffer());
         } catch(e) {
           reject(e)
         }
     })
 };
-
 
 export async function flash () {
   console.log(boardLookupTable())

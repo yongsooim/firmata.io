@@ -16,11 +16,12 @@
     "allowJs": true,
     "checkJs": false,
     "isolatedModules": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "outDir": "dist"
   },
-  "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte"],
-  "excludew": [
-    "./build/**/*" // This is what fixed it!
+  "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.svelte"],
+  "exclude": [
+    "./dist/**/*" // This is what fixed it!
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
