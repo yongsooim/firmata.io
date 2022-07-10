@@ -1,6 +1,5 @@
 <script lang="ts">
   import Serial from "./lib/Serial.svelte"
-  import SpreadSheet from "./lib/SpreadSheet.svelte"
   import { Styles, Button, Row, Col } from "sveltestrap"
 
 </script>
@@ -10,10 +9,9 @@
 
   <Row class='bottom-buffer border'>
     <Col>
-      Firmata.io, Fast prototyping on web browser. No need to download tools.
-    </Col>
-    <Col>
-
+      <h1>firmata.io<h1>
+      <h3> fast prototyping on the browser.</h3>
+      <h3>No need to downloading tools. Everything happens here.</h3>
     </Col>
   </Row>
   <Row class='bottom-buffer border'>
@@ -45,9 +43,8 @@
   </Row>
   <Row>
     <Col>
-      <SpreadSheet />
+      This page is hosted on <a href='https://pages.github.com/' target='_blank'>github pages</a>.
     </Col>
-    Footer
   </Row>
 </main>
 
@@ -73,5 +70,10 @@
     p {
       max-width: none;
     }
+  }
+
+  main{
+    height: 100%;
+    background-color: #444444;
   }
 </style>

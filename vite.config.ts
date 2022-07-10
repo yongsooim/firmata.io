@@ -15,7 +15,6 @@ export default defineConfig({
         }
       ]
     })
-
   ],
   base: './',
   optimizeDeps:{
@@ -27,9 +26,7 @@ export default defineConfig({
         NodeGlobalsPolyfillPlugin({
           buffer: true
         })
-
       ]
     }
   },
-
 })

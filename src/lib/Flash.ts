@@ -1,20 +1,23 @@
 import "./avrgirl-arduino.global.js"
 //import * as AvrgirlArduino from 'avrgirl-arduino/dist/avrgirl-arduino.global.js'
-//import injectDependencies from '../../node_modules/avrgirl-arduino/dist/avrgirl-arduino.global.js'
-//import * as AvrgirlArduino from 'avrgirl-arduino/avrgirl-arduino-browser.js'
+//import 'avrgirl-arduino/dist/avrgirl-arduino.global.js'
+import { boardLookupTable } from './boards';
 
 function getContent() {
-    return new Promise(async (resolve, reject) => {
-        const res = await fetch(`./hex/StandardFirmata.hex`);
-        resolve(res.arrayBuffer());
+    return new Promise<ArrayBuffer>(async (resolve, reject) => {
+        try {
+          const res = await fetch(`./hex/StandardFirmata.hex`);
+          resolve(res.arrayBuffer());
+        } catch(e) {
+          reject(e)
+        }
     })
 };
 
 
 export async function flash () {
-
+  console.log(boardLookupTable())
     const filecontents = await getContent();
-    console.log(filecontents)
     console.log('filecontents', filecontents);
     const board = 'uno';
 
@@ -26,6 +29,4 @@ export async function flash () {
         console.info('done correctly.');
       }
     });
-
 }
-

@@ -1,5 +1,5 @@
 {
-  "name": "sim",
+  "name": "firmata.io",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,24 +11,25 @@
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "devDependencies": {
+    "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
+    "@rxjs-ninja/rxjs-utility": "^5.1.2",
     "@sveltejs/vite-plugin-svelte": "^1.0.0-next.30",
     "@tsconfig/svelte": "^2.0.1",
     "@types/w3c-web-serial": "^1.0.2",
+    "avrgirl-arduino": "^5.0.1",
+    "rxjs": "^7.5.5",
     "svelte": "^3.44.0",
     "svelte-check": "^2.2.7",
     "svelte-preprocess": "^4.9.8",
+    "svelte-sheets": "^1.0.0",
+    "sveltestrap": "^5.9.0",
     "tslib": "^2.3.1",
     "typescript": "^4.5.4",
     "vite": "^2.9.9",
-    "vite-plugin-static-copy": "^0.6.1",
-    "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
-    "@rxjs-ninja/rxjs-utility": "^5.1.2",
-    "@types/jspreadsheet-ce": "^4.7.3",
-    "jspreadsheet-ce": "^4.11.1",
-    "rxjs": "^7.5.5",
-    "svelte-sheets": "^1.0.0",
-    "sveltestrap": "^5.9.0"
+    "vite-plugin-static-copy": "^0.6.1"
   },
   "dependencies": {
+    "buffer": "^6.0.3",
+    "match": "^1.2.10"
   }
 }

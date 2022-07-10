@@ -2,7 +2,7 @@
   import { Styles, Row, Col} from "sveltestrap";
   import firmata from "./Firmata";
   import ws from "./WebSerial";
-  import {flash} from './avrgirl.js'
+  import {flash} from './Flash'
   
   let received = []
   ws.responseReceived$.subscribe(data => {
@@ -23,7 +23,10 @@
       start
     </button>
 
-    <button class='btn btn-primary' on:click={() => {firmata.toggleLed()}} >
+    <button class='btn btn-primary' on:click={() => {firmata.toggleLed()
+      ws.list()
+      
+    }} >
       toggle led
     </button>
 

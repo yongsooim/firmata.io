@@ -20,7 +20,7 @@ class WebSerial {
     try {
 
       this.port = await navigator.serial.requestPort();
-      
+      console.log(this.port.getInfo())
       this.serialObservable =fromWebSerial(this.port, this.sendMessage$, { baudRate: 57600 }, this.endCtrl.signal)
       
       this.serialObservable.pipe(
@@ -71,6 +71,10 @@ class WebSerial {
     this.port.readable.getReader().cancel();
     this.port.close()
 
+  }
+
+  async list() {
+    console.log(await navigator.serial.getPorts())
   }
 }
 
