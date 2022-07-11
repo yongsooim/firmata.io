@@ -1,77 +1,75 @@
-import ws from "./WebSerial";
-import { first, tap } from "rxjs/operators";
-import { CommandByte, ExtendedCommandByte, PinMode } from "./FirmataConstants";
+"use strict";
+
+import { EventEmitter } from "stream";
+// Built-in Dependencies
+
+
 // Internal Dependencies
 import * as Encoder7Bit from "./encoder7bit";
 import { OneWireUtils } from "./onewireutils";
-import { Buffer } from "buffer";
-import * as Constant from './FirmataConstants'
 
-declare type Digital = 0 | 1;
-
+// Program specifics
 const i2cActive = new Map();
 
 /**
  * constants
  */
 
- const ANALOG_MAPPING_QUERY = 0x69;
- const ANALOG_MAPPING_RESPONSE = 0x6A;
- const ANALOG_MESSAGE = 0xE0;
- const CAPABILITY_QUERY = 0x6B;
- const CAPABILITY_RESPONSE = 0x6C;
- const DIGITAL_MESSAGE = 0x90;
- const END_SYSEX = 0xF7;
- const EXTENDED_ANALOG = 0x6F;
- const I2C_CONFIG = 0x78;
- const I2C_REPLY = 0x77;
- const I2C_REQUEST = 0x76;
- const I2C_READ_MASK = 0x18;   // 0b00011000
- // const I2C_END_TX_MASK = 0x40; // 0b01000000
- const ONEWIRE_CONFIG_REQUEST = 0x41;
- const ONEWIRE_DATA = 0x73;
- const ONEWIRE_DELAY_REQUEST_BIT = 0x10;
- const ONEWIRE_READ_REPLY = 0x43;
- const ONEWIRE_READ_REQUEST_BIT = 0x08;
- const ONEWIRE_RESET_REQUEST_BIT = 0x01;
- const ONEWIRE_SEARCH_ALARMS_REPLY = 0x45;
- const ONEWIRE_SEARCH_ALARMS_REQUEST = 0x44;
- const ONEWIRE_SEARCH_REPLY = 0x42;
- const ONEWIRE_SEARCH_REQUEST = 0x40;
- const ONEWIRE_WITHDATA_REQUEST_BITS = 0x3C;
- const ONEWIRE_WRITE_REQUEST_BIT = 0x20;
- const PIN_MODE = 0xF4;
- const PIN_STATE_QUERY = 0x6D;
- const PIN_STATE_RESPONSE = 0x6E;
- const PING_READ = 0x75;
- // const PULSE_IN = 0x74;
- // const PULSE_OUT = 0x73;
- const QUERY_FIRMWARE = 0x79;
- const REPORT_ANALOG = 0xC0;
- const REPORT_DIGITAL = 0xD0;
- const REPORT_VERSION = 0xF9;
- const SAMPLING_INTERVAL = 0x7A;
- const SERVO_CONFIG = 0x70;
- const SERIAL_MESSAGE = 0x60;
- const SERIAL_CONFIG = 0x10;
- const SERIAL_WRITE = 0x20;
- const SERIAL_READ = 0x30;
- const SERIAL_REPLY = 0x40;
- const SERIAL_CLOSE = 0x50;
- const SERIAL_FLUSH = 0x60;
- const SERIAL_LISTEN = 0x70;
- const START_SYSEX = 0xF0;
- const STEPPER = 0x72;
- const ACCELSTEPPER = 0x62;
- const STRING_DATA = 0x71;
- const SYSTEM_RESET = 0xFF;
- 
- const MAX_PIN_COUNT = 128;
- 
- const SYM_sendOneWireSearch = Symbol("sendOneWireSearch");
- const SYM_sendOneWireRequest = Symbol("sendOneWireRequest");
- 
+const ANALOG_MAPPING_QUERY = 0x69;
+const ANALOG_MAPPING_RESPONSE = 0x6A;
+const ANALOG_MESSAGE = 0xE0;
+const CAPABILITY_QUERY = 0x6B;
+const CAPABILITY_RESPONSE = 0x6C;
+const DIGITAL_MESSAGE = 0x90;
+const END_SYSEX = 0xF7;
+const EXTENDED_ANALOG = 0x6F;
+const I2C_CONFIG = 0x78;
+const I2C_REPLY = 0x77;
+const I2C_REQUEST = 0x76;
+const I2C_READ_MASK = 0x18;   // 0b00011000
+// const I2C_END_TX_MASK = 0x40; // 0b01000000
+const ONEWIRE_CONFIG_REQUEST = 0x41;
+const ONEWIRE_DATA = 0x73;
+const ONEWIRE_DELAY_REQUEST_BIT = 0x10;
+const ONEWIRE_READ_REPLY = 0x43;
+const ONEWIRE_READ_REQUEST_BIT = 0x08;
+const ONEWIRE_RESET_REQUEST_BIT = 0x01;
+const ONEWIRE_SEARCH_ALARMS_REPLY = 0x45;
+const ONEWIRE_SEARCH_ALARMS_REQUEST = 0x44;
+const ONEWIRE_SEARCH_REPLY = 0x42;
+const ONEWIRE_SEARCH_REQUEST = 0x40;
+const ONEWIRE_WITHDATA_REQUEST_BITS = 0x3C;
+const ONEWIRE_WRITE_REQUEST_BIT = 0x20;
+const PIN_MODE = 0xF4;
+const PIN_STATE_QUERY = 0x6D;
+const PIN_STATE_RESPONSE = 0x6E;
+const PING_READ = 0x75;
+// const PULSE_IN = 0x74;
+// const PULSE_OUT = 0x73;
+const QUERY_FIRMWARE = 0x79;
+const REPORT_ANALOG = 0xC0;
+const REPORT_DIGITAL = 0xD0;
+const REPORT_VERSION = 0xF9;
+const SAMPLING_INTERVAL = 0x7A;
+const SERVO_CONFIG = 0x70;
+const SERIAL_MESSAGE = 0x60;
+const SERIAL_CONFIG = 0x10;
+const SERIAL_WRITE = 0x20;
+const SERIAL_READ = 0x30;
+const SERIAL_REPLY = 0x40;
+const SERIAL_CLOSE = 0x50;
+const SERIAL_FLUSH = 0x60;
+const SERIAL_LISTEN = 0x70;
+const START_SYSEX = 0xF0;
+const STEPPER = 0x72;
+const ACCELSTEPPER = 0x62;
+const STRING_DATA = 0x71;
+const SYSTEM_RESET = 0xFF;
 
+const MAX_PIN_COUNT = 128;
+
+const SYM_sendOneWireSearch = Symbol("sendOneWireSearch");
+const SYM_sendOneWireRequest = Symbol("sendOneWireRequest");
 
 /**
  * MIDI_RESPONSE contains functions to be called when we receive a MIDI message from the arduino.
@@ -79,12 +77,18 @@ const i2cActive = new Map();
  * @private
  */
 
- const MIDI_RESPONSE = {
+const MIDI_RESPONSE = {
+
+  /**
+   * Handles a REPORT_VERSION response and emits the reportversion event.
+   * @private
+   * @param {Board} board the current arduino board we are working with.
+   */
+
   [REPORT_VERSION](board: Firmata) {
     board.version.major = board.buffer[1];
     board.version.minor = board.buffer[2];
-    board.dispatchEvent(new Event("reportversion"));
-    console.log(board.version)
+    board.emit("reportversion");
   },
 
   /**
@@ -93,19 +97,20 @@ const i2cActive = new Map();
    * @param {Board} board the current arduino board we are working with.
    */
 
-  [ANALOG_MESSAGE](board: Firmata) {
+  [ANALOG_MESSAGE](board) {
     const pin = board.buffer[0] & 0x0F;
     const value = board.buffer[1] | (board.buffer[2] << 7);
 
+    /* istanbul ignore else */
     if (board.pins[board.analogPins[pin]]) {
       board.pins[board.analogPins[pin]].value = value;
     }
 
-    //board.emit(`analog-read-${pin}`, value);
-    board.dispatchEvent(new CustomEvent("analog-read-${pin}", {detail:{
+    board.emit(`analog-read-${pin}`, value);
+    board.emit("analog-read", {
       pin,
       value,
-    }}));
+    });
   },
 
   /**
@@ -119,7 +124,7 @@ const i2cActive = new Map();
    * @param {Board} board the current arduino board we are working with.
    */
 
-  [DIGITAL_MESSAGE](board: Firmata) {
+  [DIGITAL_MESSAGE](board) {
     const port = board.buffer[0] & 0x0F;
     const portValue = board.buffer[1] | (board.buffer[2] << 7);
 
@@ -139,16 +144,11 @@ const i2cActive = new Map();
 
         let {value} = pinRec;
 
-        //board.emit(`digital-read-${pin}`, value);
-        //board.emit("digital-read", {
-        //  pin,
-        //  value,
-        //});
-        board.dispatchEvent(new CustomEvent(`digital-read-${pin}`, {detail:value}));
-        board.dispatchEvent(new CustomEvent("digital-read", {detail:{
+        board.emit(`digital-read-${pin}`, value);
+        board.emit("digital-read", {
           pin,
           value,
-        }}));
+        });
       }
     }
   },
@@ -187,10 +187,7 @@ const SYSEX_RESPONSE = {
       },
     },
 
-    
-    //board.emit("queryfirmware");
-    board.dispatchEvent(new Event("queryfirmware"));
-    console.log(board.firmware)
+    board.emit("queryfirmware");
   },
 
   /**
@@ -251,8 +248,7 @@ const SYSEX_RESPONSE = {
       }
     }
 
-    //board.emit("capability-query");
-    board.dispatchEvent(new Event("capability-query"));
+    board.emit("capability-query");
   },
 
   /**
@@ -275,8 +271,7 @@ const SYSEX_RESPONSE = {
     if (board.buffer.length > 7) {
       board.pins[pin].state |= (board.buffer[6] << 14);
     }
-    //board.emit(`pin-state-${pin}`);
-    board.dispatchEvent(new Event(`pin-state-${pin}`));
+    board.emit(`pin-state-${pin}`);
   },
 
   /**
@@ -296,8 +291,7 @@ const SYSEX_RESPONSE = {
       }
       pin++;
     }
-    //board.emit("analog-mapping-query");
-    board.dispatchEvent(new Event("analog-mapping-query"));
+    board.emit("analog-mapping-query");
   },
 
   /**
@@ -316,8 +310,7 @@ const SYSEX_RESPONSE = {
       reply.push(board.buffer[i] | (board.buffer[i + 1] << 7));
     }
 
-    //board.emit(`I2C-reply-${address}-${register}`, reply);
-    board.dispatchEvent(new CustomEvent(`I2C-reply-${address}-${register}`, {detail:reply}));
+    board.emit(`I2C-reply-${address}-${register}`, reply);
   },
 
   [ONEWIRE_DATA](board) {
@@ -334,16 +327,14 @@ const SYSEX_RESPONSE = {
     const pin = board.buffer[3];
     const buffer = board.buffer.slice(4, board.buffer.length - 1);
 
-    //board.emit(`1-wire-search-reply-${pin}`, OneWireUtils.readDevices(buffer));
-    board.dispatchEvent(new CustomEvent(`1-wire-search-reply-${pin}`, {detail:OneWireUtils.readDevices(buffer)}));
+    board.emit(`1-wire-search-reply-${pin}`, OneWireUtils.readDevices(buffer));
   },
 
   [ONEWIRE_SEARCH_ALARMS_REPLY](board) {
     const pin = board.buffer[3];
     const buffer = board.buffer.slice(4, board.buffer.length - 1);
 
-    //board.emit(`1-wire-search-alarms-reply-${pin}`, OneWireUtils.readDevices(buffer));
-    board.dispatchEvent(new CustomEvent(`1-wire-search-alarms-reply-${pin}`, {detail:OneWireUtils.readDevices(buffer)}));
+    board.emit(`1-wire-search-alarms-reply-${pin}`, OneWireUtils.readDevices(buffer));
   },
 
   [ONEWIRE_READ_REPLY](board) {
@@ -351,8 +342,7 @@ const SYSEX_RESPONSE = {
     const decoded = Encoder7Bit.from7BitArray(encoded);
     const correlationId = (decoded[1] << 8) | decoded[0];
 
-    //board.emit(`1-wire-read-reply-${correlationId}`, decoded.slice(2));
-    board.dispatchEvent(new CustomEvent(`1-wire-read-reply-${correlationId}`, {detail:decoded.slice(2)}));
+    board.emit(`1-wire-read-reply-${correlationId}`, decoded.slice(2));
   },
 
   /**
@@ -362,8 +352,7 @@ const SYSEX_RESPONSE = {
    */
 
   [STRING_DATA](board) {
-    //board.emit("string", Buffer.from(board.buffer.slice(2, -1)).toString().replace(/\0/g, ""));
-    board.dispatchEvent(new CustomEvent("string", {detail:Buffer.from(board.buffer.slice(2, -1)).toString().replace(/\0/g, "")}));
+    board.emit("string", Buffer.from(board.buffer.slice(2, -1)).toString().replace(/\0/g, ""));
   },
 
   /**
@@ -382,8 +371,7 @@ const SYSEX_RESPONSE = {
       (durationBuffer[1] << 16) +
       (durationBuffer[2] << 8) +
       (durationBuffer[3]));
-    //board.emit(`ping-read-${pin}`, duration);
-    board.dispatchEvent(new CustomEvent(`ping-read-${pin}`, {detail:duration}));
+    board.emit(`ping-read-${pin}`, duration);
   },
 
   /**
@@ -393,8 +381,7 @@ const SYSEX_RESPONSE = {
 
   [STEPPER](board) {
     const deviceNum = board.buffer[2];
-    //board.emit(`stepper-done-${deviceNum}`, true);
-    board.dispatchEvent(new CustomEvent(`stepper-done-${deviceNum}`, {detail:true}));
+    board.emit(`stepper-done-${deviceNum}`, true);
   },
 
   /**
@@ -444,50 +431,54 @@ const SYSEX_RESPONSE = {
 
 };
 
+/**
+ * The default transport class
+ */
+
+let Transport = null;
+
+
+/**
+ * @class The Board object represents an arduino board.
+ * @augments EventEmitter
+ * @param {String} port This is the serial port the arduino is connected to.
+ * @param {function} function A function to be called when the arduino is ready to communicate.
+ * @property MODES All the modes available for pins on this arduino board.
+ * @property I2C_MODES All the I2C modes available.
+ * @property SERIAL_MODES All the Serial modes available.
+ * @property SERIAL_PORT_ID ID values to pass as the portId parameter when calling serialConfig.
+ * @property HIGH A constant to set a pins value to HIGH when the pin is set to an output.
+ * @property LOW A constant to set a pins value to LOW when the pin is set to an output.
+ * @property pins An array of pin object literals.
+ * @property analogPins An array of analog pins and their corresponding indexes in the pins array.
+ * @property version An object indicating the major and minor version of the firmware currently running.
+ * @property firmware An object indicating the name, major and minor version of the firmware currently running.
+ * @property buffer An array holding the current bytes received from the arduino.
+ * @property {SerialPort} sp The serial port object used to communicate with the arduino.
+ */
 
 type Version = {
   major: number;
   minor: number;
 }
 
-type Pin = {
-  mode: PinMode
-  value: number
-  report: number
-  supportedModes: PinMode[]
-}
-
-const defaultPin: Pin = {
-  mode: PinMode.PIN_MODE_OUTPUT,
-  value: 0,
-  report: 0,
-  supportedModes: [PinMode.PIN_MODE_INPUT, PinMode.PIN_MODE_OUTPUT]
-}
-
-class Firmata extends EventTarget {
+export class Firmata extends EventEmitter {
   static SYSEX_RESPONSE = SYSEX_RESPONSE
   static MIDI_RESPONSE = MIDI_RESPONSE
-
-  currentPinMode : Array<PinMode>
-  currentDigitalWrite : Array<Digital>
-  reportedDigitalRead : Array<Digital>
-  pins: Pin[] = Array(50).fill(defaultPin)
-  ports = new Array<number>(16).fill(0)
-  analogPins: number[] = []
-  buffer: number[] = []
-  name = 'Firmata'
-  pending: number = 0
-  digitalPortQueue = 0x0000
-  versionReceived = false
-
+  _events: string[] = []
   HIGH = 1;
   LOW = 0;
-  version: Version  = {
-    major: 0,
-    minor: 0,
-  }
-  firmware
+  pins = [];
+  ports = Array(16).fill(0);
+  analogPins = [];
+  version:Version;
+  firmware = {};
+  buffer = [];
+  versionReceived = false;
+  name = "Firmata";
   settings
+  pending = 0;
+  digitalPortQueue = 0x0000;
   isReady
   MODES
 
@@ -499,140 +490,351 @@ class Firmata extends EventTarget {
   RESOLUTION
   transport
   reportVersionTimeoutId
+  
+  
 
-  constructor() {
-    super()
-    this.pins[13] = {
-      mode: PinMode.PIN_MODE_OUTPUT,
-      value: 0,
-      report: 0,
-      supportedModes: [PinMode.PIN_MODE_OUTPUT],
+  constructor(port?, options?, callback?) {
+    super();
+
+    if (typeof options === "function" || typeof options === "undefined") {
+      callback = options;
+      options = {};
     }
-    this.currentPinMode = new Array<PinMode>(50).fill(PinMode.PIN_MODE_INPUT)
-    this.currentDigitalWrite = new Array<Digital>(50).fill(0)
-    this.reportedDigitalRead = new Array<Digital>(50).fill(0)
-  }
 
-  toggleLed() {
-    this.digitalWrite(13, 1, false);
-    //this.emit('data', [0x90, 13, 1])
-    //this.currentDigitalWrite[13] ^= 1
-    //ws.sendMessage$.next(new Uint8Array([CommandByte.SET_DIGITAL_PIN_VALUE, 13, this.currentDigitalWrite[13]]))
-  }
+    const board = this;
+    const defaults = {
+      reportVersionTimeout: 5000,
+      samplingInterval: 19,
+      serialport: {
+        baudRate: 57600,
+        // https://github.com/node-serialport/node-serialport/blob/5.0.0/UPGRADE_GUIDE.md#open-options
+        highWaterMark: 256,
+      },
+    };
 
-  readADC() {
-    writeToTransport(this, [CommandByte.REPORT_ANALOG, 0, 1])
-  }
+    const settings = Object.assign({}, defaults, options);
 
+    this.isReady = false;
 
-  receiveHandler(data: number[]) {
-    for (let i = 0; i < data.length; i++) {
-      let byte = data[i];
-      // we dont want to push 0 as the first byte on our buffer
-      if (this.buffer.length === 0 && byte === 0) {
-        continue;
+    this.MODES = {
+      INPUT: 0x00,
+      OUTPUT: 0x01,
+      ANALOG: 0x02,
+      PWM: 0x03,
+      SERVO: 0x04,
+      SHIFT: 0x05,
+      I2C: 0x06,
+      ONEWIRE: 0x07,
+      STEPPER: 0x08,
+      SERIAL: 0x0A,
+      PULLUP: 0x0B,
+      IGNORE: 0x7F,
+      PING_READ: 0x75,
+      UNKOWN: 0x10,
+    };
+
+    this.I2C_MODES = {
+      WRITE: 0,
+      READ: 1,
+      CONTINUOUS_READ: 2,
+      STOP_READING: 3,
+    };
+
+    this.STEPPER = {
+      TYPE: {
+        DRIVER: 1,
+        TWO_WIRE: 2,
+        THREE_WIRE: 3,
+        FOUR_WIRE: 4,
+      },
+      STEP_SIZE: {
+        WHOLE: 0,
+        HALF: 1
+      },
+      RUN_STATE: {
+        STOP: 0,
+        ACCEL: 1,
+        DECEL: 2,
+        RUN: 3,
+      },
+      DIRECTION: {
+        CCW: 0,
+        CW: 1,
+      },
+    };
+
+    this.SERIAL_MODES = {
+      CONTINUOUS_READ: 0x00,
+      STOP_READING: 0x01,
+    };
+
+    // ids for hardware and software serial ports on the board
+    this.SERIAL_PORT_IDs = {
+      HW_SERIAL0: 0x00,
+      HW_SERIAL1: 0x01,
+      HW_SERIAL2: 0x02,
+      HW_SERIAL3: 0x03,
+      SW_SERIAL0: 0x08,
+      SW_SERIAL1: 0x09,
+      SW_SERIAL2: 0x10,
+      SW_SERIAL3: 0x11,
+
+      // Default can be used by dependant libraries to key on a
+      // single property name when negotiating ports.
+      //
+      // Firmata elects SW_SERIAL0: 0x08 as its DEFAULT
+      DEFAULT: 0x08,
+    };
+
+    // map to the pin resolution value in the capability query response
+    this.SERIAL_PIN_TYPES = {
+      RES_RX0: 0x00,
+      RES_TX0: 0x01,
+      RES_RX1: 0x02,
+      RES_TX1: 0x03,
+      RES_RX2: 0x04,
+      RES_TX2: 0x05,
+      RES_RX3: 0x06,
+      RES_TX3: 0x07,
+    };
+
+    this.RESOLUTION = {
+      ADC: null,
+      DAC: null,
+      PWM: null,
+    };
+
+    this.HIGH = 1;
+    this.LOW = 0;
+    this.pins = [];
+    this.ports = Array(16).fill(0);
+    this.analogPins = [];
+    this.version;
+    this.firmware = {};
+    this.buffer = [];
+    this.versionReceived = false;
+    this.name = "Firmata";
+    this.settings = settings;
+    this.pending = 0;
+    this.digitalPortQueue = 0x0000;
+
+    if (typeof port === "object") {
+      this.transport = port;
+    } else {
+      if (!Transport) {
+        throw new Error("Missing Default Transport");
+      }
+      this.transport = new Transport(port, settings.serialport);
+    }
+
+    this.transport.on("close", event => {
+
+      // https://github.com/node-serialport/node-serialport/blob/5.0.0/UPGRADE_GUIDE.md#opening-and-closing
+      if (event && event.disconnect && event.disconnected) {
+        this.emit("disconnect");
+        return;
+      }
+
+      this.emit("close");
+    });
+
+    this.transport.on("open", event => {
+      this.emit("open", event);
+      // Legacy
+      this.emit("connect", event);
+    });
+
+    this.transport.on("error", error => {
+      if (!this.isReady && typeof callback === "function") {
+        callback(error);
       } else {
-        this.buffer.push(byte);
+        this.emit("error", error);
+      }
+    });
 
-        let first = this.buffer[0];
-        let last = this.buffer[this.buffer.length - 1];
-
-        // [START_SYSEX, ... END_SYSEX]
-        if (first === START_SYSEX && last === END_SYSEX) {
-
-          let handler = SYSEX_RESPONSE[this.buffer[1]];
-
-          // Ensure a valid SYSEX_RESPONSE handler exists
-          // Only process these AFTER the REPORT_VERSION
-          // message has been received and processed.
-          if (handler && this.versionReceived) {
-            handler(this);
-          }
-
-          // It is possible for the board to have
-          // existing activity from a previous run
-          // that will leave any of the following
-          // active:
-          //
-          //    - ANALOG_MESSAGE
-          //    - SERIAL_READ
-          //    - I2C_REQUEST, CONTINUOUS_READ
-          //
-          // This means that we will receive these
-          // messages on transport "open", before any
-          // handshake can occur. We MUST assert
-          // that we will only process this buffer
-          // AFTER the REPORT_VERSION message has
-          // been received. Not doing so will result
-          // in the appearance of the program "hanging".
-          //
-          // Since we cannot do anything with this data
-          // until _after_ REPORT_VERSION, discard it.
-          //
-          this.buffer.length = 0;
-
-        } else if (first === START_SYSEX && (this.buffer.length > 0)) {
-          // we have a new command after an incomplete sysex command
-          let currByte = data[i];
-          if (currByte > 0x7F) {
-            this.buffer.length = 0;
-            this.buffer.push(currByte);
-          }
+    this.transport.on("data", data => {
+      for (let i = 0; i < data.length; i++) {
+        let byte = data[i];
+        // we dont want to push 0 as the first byte on our buffer
+        if (this.buffer.length === 0 && byte === 0) {
+          continue;
         } else {
-          /* istanbul ignore else */
-          if (first !== START_SYSEX) {
-            // Check if data gets out of sync: first byte in buffer
-            // must be a valid response if not START_SYSEX
-            // Identify response on first byte
+          this.buffer.push(byte);
+
+          let first = this.buffer[0];
+          let last = this.buffer[this.buffer.length - 1];
+
+          // [START_SYSEX, ... END_SYSEX]
+          if (first === START_SYSEX && last === END_SYSEX) {
+
+            let handler = SYSEX_RESPONSE[this.buffer[1]];
+
+            // Ensure a valid SYSEX_RESPONSE handler exists
+            // Only process these AFTER the REPORT_VERSION
+            // message has been received and processed.
+            if (handler && this.versionReceived) {
+              handler(this);
+            }
+
+            // It is possible for the board to have
+            // existing activity from a previous run
+            // that will leave any of the following
+            // active:
+            //
+            //    - ANALOG_MESSAGE
+            //    - SERIAL_READ
+            //    - I2C_REQUEST, CONTINUOUS_READ
+            //
+            // This means that we will receive these
+            // messages on transport "open", before any
+            // handshake can occur. We MUST assert
+            // that we will only process this buffer
+            // AFTER the REPORT_VERSION message has
+            // been received. Not doing so will result
+            // in the appearance of the program "hanging".
+            //
+            // Since we cannot do anything with this data
+            // until _after_ REPORT_VERSION, discard it.
+            //
+            this.buffer.length = 0;
+
+          } else if (first === START_SYSEX && (this.buffer.length > 0)) {
+            // we have a new command after an incomplete sysex command
+            let currByte = data[i];
+            if (currByte > 0x7F) {
+              this.buffer.length = 0;
+              this.buffer.push(currByte);
+            }
+          } else {
+            /* istanbul ignore else */
+            if (first !== START_SYSEX) {
+              // Check if data gets out of sync: first byte in buffer
+              // must be a valid response if not START_SYSEX
+              // Identify response on first byte
+              let response = first < START_SYSEX ? (first & START_SYSEX) : first;
+
+              // Check if the first byte is possibly
+              // a valid MIDI_RESPONSE (handler)
+              /* istanbul ignore else */
+              if (response !== REPORT_VERSION &&
+                  response !== ANALOG_MESSAGE &&
+                  response !== DIGITAL_MESSAGE) {
+                // If not valid, then we received garbage and can discard
+                // whatever bytes have been been queued.
+                this.buffer.length = 0;
+              }
+            }
+          }
+
+          // There are 3 bytes in the buffer and the first is not START_SYSEX:
+          // Might have a MIDI Command
+          if (this.buffer.length === 3 && first !== START_SYSEX) {
+            // response bytes under 0xF0 we have a multi byte operation
             let response = first < START_SYSEX ? (first & START_SYSEX) : first;
 
-            // Check if the first byte is possibly
-            // a valid MIDI_RESPONSE (handler)
             /* istanbul ignore else */
-            if (response !== REPORT_VERSION &&
-                response !== ANALOG_MESSAGE &&
-                response !== DIGITAL_MESSAGE) {
-              // If not valid, then we received garbage and can discard
-              // whatever bytes have been been queued.
+            if (MIDI_RESPONSE[response]) {
+              // It's ok that this.versionReceived will be set to
+              // true every time a valid MIDI_RESPONSE is received.
+              // This condition is necessary to ensure that REPORT_VERSION
+              // is called first.
+              if (this.versionReceived || first === REPORT_VERSION) {
+                this.versionReceived = true;
+                MIDI_RESPONSE[response](this);
+              }
+              this.buffer.length = 0;
+            } else {
+              // A bad serial read must have happened.
+              // Reseting the buffer will allow recovery.
               this.buffer.length = 0;
             }
           }
         }
+      }
+    });
 
-        // There are 3 bytes in the buffer and the first is not START_SYSEX:
-        // Might have a MIDI Command
-        if (this.buffer.length === 3 && first !== START_SYSEX) {
-          // response bytes under 0xF0 we have a multi byte operation
-          let response = first < START_SYSEX ? (first & START_SYSEX) : first;
+    // if we have not received the version within the allotted
+    // time specified by the reportVersionTimeout (user or default),
+    // then send an explicit request for it.
+    this.reportVersionTimeoutId = setTimeout(() => {
+      /* istanbul ignore else */
+      if (this.versionReceived === false) {
+        this.reportVersion(function() {});
+        this.queryFirmware(function() {});
+      }
+    }, settings.reportVersionTimeout);
 
-          /* istanbul ignore else */
-          if (MIDI_RESPONSE[response]) {
-            // It's ok that this.versionReceived will be set to
-            // true every time a valid MIDI_RESPONSE is received.
-            // This condition is necessary to ensure that REPORT_VERSION
-            // is called first.
-            if (this.versionReceived || first === REPORT_VERSION) {
-              this.versionReceived = true;
-              MIDI_RESPONSE[response](this);
-            }
-            this.buffer.length = 0;
-          } else {
-            // A bad serial read must have happened.
-            // Reseting the buffer will allow recovery.
-            this.buffer.length = 0;
-          }
-        }
+    function ready() {
+      board.isReady = true;
+      board.emit("ready");
+      /* istanbul ignore else */
+      if (typeof callback === "function") {
+        callback();
       }
     }
+
+    // Await the reported version.
+    this.once("reportversion", () => {
+      clearTimeout(this.reportVersionTimeoutId);
+      this.versionReceived = true;
+      this.once("queryfirmware", () => {
+
+        // Only preemptively set the sampling interval if `samplingInterval`
+        // property was _explicitly_ set as a constructor option.
+        if (options.samplingInterval !== undefined) {
+          this.setSamplingInterval(options.samplingInterval);
+        }
+        if (settings.skipCapabilities) {
+          this.analogPins = settings.analogPins || this.analogPins;
+          this.pins = settings.pins || this.pins;
+          /* istanbul ignore else */
+          if (!this.pins.length) {
+            for (var i = 0; i < (settings.pinCount || MAX_PIN_COUNT); i++) {
+              var supportedModes = [];
+              var analogChannel = this.analogPins.indexOf(i);
+
+              if (analogChannel < 0) {
+                analogChannel = 127;
+              }
+              this.pins.push({supportedModes, analogChannel});
+            }
+          }
+
+          // If the capabilities query is skipped,
+          // default resolution values will be used.
+          //
+          // Based on ATmega328/P
+          //
+          this.RESOLUTION.ADC = 0x3FF;
+          this.RESOLUTION.PWM = 0x0FF;
+
+          ready();
+        } else {
+          this.queryCapabilities(() => {
+            this.queryAnalogMapping(ready);
+          });
+        }
+      });
+    });
   }
 
-  
+  /**
+   * Asks the arduino to tell us its version.
+   * @param {function} callback A function to be called when the arduino has reported its version.
+   */
+
+  reportVersion(callback) {
+    this.once("reportversion", callback);
+    writeToTransport(this, [REPORT_VERSION]);
+  }
+
   /**
    * Asks the arduino to tell us its firmware version.
    * @param {function} callback A function to be called when the arduino has reported its firmware version.
    */
-  queryFirmware(callback?) {
-    this.addEventListener("queryfirmware", callback, { once: true });
+
+  queryFirmware(callback) {
+    this.once("queryfirmware", callback);
     writeToTransport(this, [
       START_SYSEX,
       QUERY_FIRMWARE,
@@ -640,16 +842,17 @@ class Firmata extends EventTarget {
     ]);
   }
 
-  
+
+
   /**
    * Asks the arduino to read analog data. Turn on reporting for this pin.
    * @param {number} pin The pin to read analog data
    * @param {function} callback A function to call when we have the analag data.
    */
 
-   analogRead(pin, callback) {
+  analogRead(pin, callback) {
     this.reportAnalogPin(pin, 1);
-    this.addEventListener(`analog-read-${pin}`, callback);
+    this.addListener(`analog-read-${pin}`, callback);
   }
 
   /**
@@ -706,7 +909,8 @@ class Firmata extends EventTarget {
    * @param {number} min A 14-bit signed int.
    * @param {number} max A 14-bit signed int.
    */
-   servoConfig(pin, min, max) {
+
+  servoConfig(pin, min, max) {
     if (typeof pin === "object" && pin !== null) {
       let temp = pin;
       pin = temp.pin;
@@ -795,7 +999,7 @@ class Firmata extends EventTarget {
    * @param {boolean} enqueue When true, the local state is updated but the command is not sent to the Arduino
    */
 
-  digitalWrite(pin: number, value: number, enqueue: boolean = false) {
+  digitalWrite(pin, value, enqueue) {
     let port = this.updateDigitalPort(pin, value);
 
     if (enqueue) {
@@ -844,7 +1048,7 @@ class Firmata extends EventTarget {
    * @param {number} port The port you want to update.
    */
 
-  writeDigitalPort(port: number) {
+  writeDigitalPort(port) {
     writeToTransport(this, [
       DIGITAL_MESSAGE | port,
       this.ports[port] & 0x7F,
@@ -859,9 +1063,9 @@ class Firmata extends EventTarget {
    * @param {function} callback The function to call when data has been received
    */
 
-  digitalRead(pin: number, callback: any) {
+  digitalRead(pin, callback) {
     this.reportDigitalPin(pin, 1);
-    this.addEventListener(`digital-read-${pin}`, callback);
+    this.addListener(`digital-read-${pin}`, callback);
   }
 
   /**
@@ -870,7 +1074,7 @@ class Firmata extends EventTarget {
    */
 
   queryCapabilities(callback) {
-    this.addEventListener("capability-query", callback, {once: true});
+    this.once("capability-query", callback);
     writeToTransport(this, [
       START_SYSEX,
       CAPABILITY_QUERY,
@@ -880,11 +1084,11 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the arduino to tell us its analog pin mapping
-   * @param {(function)} callback A function to call when we receive the pin mappings.
+   * @param {function} callback A function to call when we receive the pin mappings.
    */
 
   queryAnalogMapping(callback) {
-    this.addEventListener("analog-mapping-query", callback, {once: true});
+    this.once("analog-mapping-query", callback);
     writeToTransport(this, [
       START_SYSEX,
       ANALOG_MAPPING_QUERY,
@@ -899,7 +1103,7 @@ class Firmata extends EventTarget {
    */
 
   queryPinState(pin, callback) {
-    this.addEventListener(`pin-state-${pin}`, callback, {once: true});
+    this.once(`pin-state-${pin}`, callback);
     writeToTransport(this, [
       START_SYSEX,
       PIN_STATE_QUERY,
@@ -1152,7 +1356,7 @@ class Firmata extends EventTarget {
       (numBytes >> 7) & 0x7F,
       END_SYSEX,
     ]);
-    this.addEventListener(`I2C-reply-${address}-0`, callback, {once: true});
+    this.once(`I2C-reply-${address}-0`, callback);
   }
 
   // TODO: Refactor i2cRead and i2cReadOnce
@@ -1202,7 +1406,7 @@ class Firmata extends EventTarget {
       END_SYSEX
     );
 
-    this.addEventListener(event, callback);
+    this.on(event, callback);
 
     i2cRequest(this, data);
 
@@ -1242,11 +1446,11 @@ class Firmata extends EventTarget {
       END_SYSEX,
     ]);
 
-    //Object.keys(this._events).forEach(event => {
-    //  if (event.startsWith(`I2C-reply-${options.address}`)) {
-    //    this.off(event);
-    //  }
-    //});
+    Object.keys(this._events).forEach(event => {
+      if (event.startsWith(`I2C-reply-${options.address}`)) {
+        this.removeAllListeners(event);
+      }
+    });
   }
 
   /**
@@ -1299,7 +1503,7 @@ class Firmata extends EventTarget {
       END_SYSEX
     );
 
-    this.addEventListener(event, callback, {once: true});
+    this.once(event, callback);
 
     i2cRequest(this, data);
 
@@ -1369,10 +1573,10 @@ class Firmata extends EventTarget {
       /* istanbul ignore next */
       callback(new Error("1-Wire device search timeout - are you running ConfigurableFirmata?"));
     }, 5000);
-    this.addEventListener(event, devices => {
+    this.once(event, devices => {
       clearTimeout(timeout);
       callback(null, devices);
-    }, {once: true});
+    });
   }
 
   /**
@@ -1539,7 +1743,7 @@ class Firmata extends EventTarget {
     writeToTransport(this, output);
 
     if (event && callback) {
-      this.addEventListener(event, callback, {once: true});
+      this.once(event, callback);
     }
   }
 
@@ -1579,8 +1783,7 @@ class Firmata extends EventTarget {
   reportAnalogPin(pin, value) {
     /* istanbul ignore else */
     if (value === 0 || value === 1) {
-      this.pins[pin].report = value;
-      //this.pins[this.analogPins[pin]].report = value;
+      this.pins[this.analogPins[pin]].report = value;
       writeToTransport(this, [
         REPORT_ANALOG | pin,
         value
@@ -1644,7 +1847,7 @@ class Firmata extends EventTarget {
       END_SYSEX,
     ]);
 
-    this.addEventListener(`ping-read-${pin}`, callback, {once: true});
+    this.once(`ping-read-${pin}`, callback);
   }
 
   /**
@@ -1773,7 +1976,7 @@ class Firmata extends EventTarget {
     ]);
 
     if (callback) {
-      this.addEventListener(`stepper-done-${deviceNum}`, callback, {once: true});
+      this.once(`stepper-done-${deviceNum}`, callback);
     }
   }
 
@@ -1794,7 +1997,7 @@ class Firmata extends EventTarget {
     ]);
 
     if (callback) {
-      this.addEventListener(`stepper-done-${deviceNum}`, callback, false);
+      this.once(`stepper-done-${deviceNum}`, callback);
     }
   }
 
@@ -2290,6 +2493,29 @@ class Firmata extends EventTarget {
     return false;
   }
 
+  /**
+   * Firmata.requestPort(callback) Request an acceptable port to connect to.
+   * callback(error, port)
+   */
+
+  static requestPort(callback) {
+    if (!Transport || (Transport && typeof Transport.list !== "function")) {
+      process.nextTick(() => {
+        callback(new Error("No Transport provided"), null);
+      });
+      return
+    }
+    Transport.list().then((ports) => {
+      const port = ports.find(port => Firmata.isAcceptablePort(port) && port);
+      if (port) {
+        callback(null, port);
+      } else {
+        callback(new Error("No Acceptable Port Found"), null);
+      }
+    }).catch(error => {
+      callback(error, null);
+    });
+  }
 
   // Expose encode/decode for custom sysex messages
   static encode(data) {
@@ -2321,14 +2547,13 @@ class Firmata extends EventTarget {
 
     return decoded;
   }
-
-  /** EventEmiiter -> EventTarget */
-  //emit(name: string, data: any) {
-  //  this.dispatchEvent(new CustomEvent('data', { detail: data }))
-  //}
 }
 
 
+// Static Compatibility Aliases
+Firmata.Board = Firmata;
+Firmata.SYSEX_RESPONSE = SYSEX_RESPONSE;
+Firmata.MIDI_RESPONSE = MIDI_RESPONSE;
 
 // The following are used internally.
 
@@ -2343,13 +2568,12 @@ class Firmata extends EventTarget {
  * @param  {Array} data  An array of 8 and 7 bit values that will be
  *                       wrapped in a Buffer and written to the transport.
  */
- function writeToTransport(board: Firmata, data: number[]) {
-  ws.write(data)
-  //board.pending++;
-  //board.transport.write(Buffer.from(data), () => board.pending--);
+function writeToTransport(board, data) {
+  board.pending++;
+  board.transport.write(Buffer.from(data), () => board.pending--);
 }
 
-function i2cRequest(board: Firmata, bytes: number[]) {
+function i2cRequest(board, bytes) {
   const active = i2cActive.get(board);
 
   if (!active) {
@@ -2380,7 +2604,7 @@ function i2cRequest(board: Firmata, bytes: number[]) {
 }
 
 
-function encode32BitSignedInteger(data: number) {
+function encode32BitSignedInteger(data) {
   const negative = data < 0;
 
   data = Math.abs(data);
@@ -2400,7 +2624,7 @@ function encode32BitSignedInteger(data: number) {
   return encoded;
 }
 
-function decode32BitSignedInteger(bytes: number[]) {
+function decode32BitSignedInteger(bytes) {
   let result = (bytes[0] & 0x7F) |
     ((bytes[1] & 0x7F) << 7) |
     ((bytes[2] & 0x7F) << 14) |
@@ -2416,7 +2640,7 @@ function decode32BitSignedInteger(bytes: number[]) {
 
 const MAX_SIGNIFICAND = Math.pow(2, 23);
 
-function encodeCustomFloat(input: number) {
+function encodeCustomFloat(input) {
   const sign = input < 0 ? 1 : 0;
 
   input = Math.abs(input);
@@ -2451,7 +2675,7 @@ function encodeCustomFloat(input: number) {
   return encoded;
 }
 
-function decodeCustomFloat(input: number) {
+function decodeCustomFloat(input) {
   const exponent = ((input[3] >> 2) & 0x0F) - 11;
   const sign = (input[3] >> 6) & 0x01;
 
@@ -2465,7 +2689,3 @@ function decodeCustomFloat(input: number) {
   }
   return result * Math.pow(10, exponent);
 }
-
-
-export const firmata = new Firmata()
-export default firmata

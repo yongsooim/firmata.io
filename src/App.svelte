@@ -7,20 +7,24 @@
 
 <main>
 
+      <!--
+
   <Navbar class="navbar-dark fixed-top bg-primary flex-md-nowrap p-0 shadow">
     <h1>Navbar</h1>
   </Navbar>
-  
+-->  
   <Row >
     <Col class='border'>
       <h1>Navbar</h1>
     </Col>
     <Col class='col-2 border'>
+      <!--
       <Nav id = "menu">
         <NavItem>
           <a href = 'https://github.com/yongsooim/firmata.io' target=_blank><img alt = 'gh logo' src = './static/image/gh.png'></a>
         </NavItem>
       </Nav>
+      -->
     </Col>
   </Row>
   <Row class ='h-100 '>
@@ -42,20 +46,13 @@
               <Serial />
             </Col>
           </Row>
-          <Row class='border'>
-            <Col>
-              <Button color="primary">asdasdl</Button>
-            </Col>
-          </Row>
           <Row class = 'border'>
             <p>
-              Visit <a href="https://svelte.dev">svelte.dev</a> to learn how to build Svelte
-              apps.
+              Content
             </p>
 
             <p>
-              Check out <a href="https://github.com/sveltejs/kit#readme">SvelteKit</a> for
-              the officially supported framework, also powered by Vite!
+              Content
             </p>
           </Row>
         </Col>
