@@ -1,10 +1,9 @@
-import "./avrgirl-arduino.global.js"
-import { boardLookupTable } from './boards';
+import { boardLookupTable } from './ref/boards';
 
 function getContent() {
     return new Promise<ArrayBuffer>(async (resolve, reject) => {
         try {
-          const res = await fetch(`./static/hex/StandardFirmata.hex`);
+          const res = await fetch(`./static/hex/uno/StandardFirmata.cpp.hex`);
           resolve(res.arrayBuffer());
         } catch(e) {
           reject(e)
@@ -13,9 +12,7 @@ function getContent() {
 };
 
 export async function flash () {
-  console.log(boardLookupTable())
     const filecontents = await getContent();
-    console.log('filecontents', filecontents);
     const board = 'uno';
 
     let avrgirl = new AvrgirlArduino({ board: board, debug: true });

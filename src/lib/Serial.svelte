@@ -3,17 +3,15 @@
   import ws from "./WebSerial";
   import { flash } from "./Flash";
   import { Styles } from "sveltestrap";
-import { onMount } from "svelte";
+  import { onMount } from "svelte";
   
   let received = []
   ws.responseReceived$.subscribe(data => {
     received = [...received, data.toString()]
   });
 
-
-
   function startButtonClicked() {
-    ws.requestPort();
+    ws.connect();
   }
 
 </script>
@@ -44,12 +42,10 @@ import { onMount } from "svelte";
     <button class='btn btn-primary' on:click={() => {ws.close()}} >
       close
     </button>
-
-    
+  
     <button class='btn btn-primary' on:click={() => {flash()}} >
       flash
     </button>
-
 
     <ul>
       {#each received as data}
