@@ -1,5 +1,5 @@
 "use strict";
-import * as  Encoder7Bit from "./encoder7bit.js";
+import * as  Encoder7Bit from "./encoder7bit";
 export const OneWireUtils = {
   crc8(data: number[]) {
     let crc = 0;

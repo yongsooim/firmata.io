@@ -1,7 +1,6 @@
 <script lang="ts">
-  import Serial from "./lib/Serial.svelte"
+  import Main from "./lib/Main.svelte"
   import { Navbar, Styles, Row, Col, Button, Nav, NavItem } from "sveltestrap"
-  import firmata from "./lib/Firmata"
 
 </script>
 
@@ -17,15 +16,15 @@
     <Col class='border'>
       <h1>Navbar</h1>
     </Col>
+    <!--
     <Col class='col-2 border'>
-      <!--
       <Nav id = "menu">
         <NavItem>
           <a href = 'https://github.com/yongsooim/firmata.io' target=_blank><img alt = 'gh logo' src = './static/image/gh.png'></a>
         </NavItem>
       </Nav>
-      -->
     </Col>
+  -->
   </Row>
   <Row class ='h-100 '>
     <Col class = 'border col-2 '>
@@ -43,7 +42,7 @@
         <Col class = 'border'>
           <Row class='border'>
             <Col>
-              <Serial />
+              <Main />
             </Col>
           </Row>
           <Row class = 'border'>

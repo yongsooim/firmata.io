@@ -1,77 +1,85 @@
-import ws from "./WebSerial";
-import { first, tap } from "rxjs/operators";
-import { CommandByte, ExtendedCommandByte, PinMode } from "./FirmataConstants";
+// Built-in Dependencies
+const Emitter = require("events");
+
 // Internal Dependencies
-import * as Encoder7Bit from "./encoder7bit";
-import { OneWireUtils } from "./onewireutils";
-import { Buffer } from "buffer";
-import * as Constant from './FirmataConstants'
+const Encoder7Bit = require("./encoder7bit");
+const OneWire = require("./onewireutils");
 
-declare type Digital = 0 | 1;
+import {Buffer} from 'buffer'
+import EventEmitter from 'events';
+import type { WebSerialPort } from '../WebSerial';
 
+declare type Pin = {
+  value?: number,
+  mode?: number,
+  supportedModes: number[],
+  report?: number,
+  state?: number,
+  analogChannel?: number,
+}
+
+// Program specifics
 const i2cActive = new Map();
 
 /**
  * constants
  */
 
- const ANALOG_MAPPING_QUERY = 0x69;
- const ANALOG_MAPPING_RESPONSE = 0x6A;
- const ANALOG_MESSAGE = 0xE0;
- const CAPABILITY_QUERY = 0x6B;
- const CAPABILITY_RESPONSE = 0x6C;
- const DIGITAL_MESSAGE = 0x90;
- const END_SYSEX = 0xF7;
- const EXTENDED_ANALOG = 0x6F;
- const I2C_CONFIG = 0x78;
- const I2C_REPLY = 0x77;
- const I2C_REQUEST = 0x76;
- const I2C_READ_MASK = 0x18;   // 0b00011000
- // const I2C_END_TX_MASK = 0x40; // 0b01000000
- const ONEWIRE_CONFIG_REQUEST = 0x41;
- const ONEWIRE_DATA = 0x73;
- const ONEWIRE_DELAY_REQUEST_BIT = 0x10;
- const ONEWIRE_READ_REPLY = 0x43;
- const ONEWIRE_READ_REQUEST_BIT = 0x08;
- const ONEWIRE_RESET_REQUEST_BIT = 0x01;
- const ONEWIRE_SEARCH_ALARMS_REPLY = 0x45;
- const ONEWIRE_SEARCH_ALARMS_REQUEST = 0x44;
- const ONEWIRE_SEARCH_REPLY = 0x42;
- const ONEWIRE_SEARCH_REQUEST = 0x40;
- const ONEWIRE_WITHDATA_REQUEST_BITS = 0x3C;
- const ONEWIRE_WRITE_REQUEST_BIT = 0x20;
- const PIN_MODE = 0xF4;
- const PIN_STATE_QUERY = 0x6D;
- const PIN_STATE_RESPONSE = 0x6E;
- const PING_READ = 0x75;
- // const PULSE_IN = 0x74;
- // const PULSE_OUT = 0x73;
- const QUERY_FIRMWARE = 0x79;
- const REPORT_ANALOG = 0xC0;
- const REPORT_DIGITAL = 0xD0;
- const REPORT_VERSION = 0xF9;
- const SAMPLING_INTERVAL = 0x7A;
- const SERVO_CONFIG = 0x70;
- const SERIAL_MESSAGE = 0x60;
- const SERIAL_CONFIG = 0x10;
- const SERIAL_WRITE = 0x20;
- const SERIAL_READ = 0x30;
- const SERIAL_REPLY = 0x40;
- const SERIAL_CLOSE = 0x50;
- const SERIAL_FLUSH = 0x60;
- const SERIAL_LISTEN = 0x70;
- const START_SYSEX = 0xF0;
- const STEPPER = 0x72;
- const ACCELSTEPPER = 0x62;
- const STRING_DATA = 0x71;
- const SYSTEM_RESET = 0xFF;
- 
- const MAX_PIN_COUNT = 128;
- 
- const SYM_sendOneWireSearch = Symbol("sendOneWireSearch");
- const SYM_sendOneWireRequest = Symbol("sendOneWireRequest");
- 
+const ANALOG_MAPPING_QUERY = 0x69;
+const ANALOG_MAPPING_RESPONSE = 0x6A;
+const ANALOG_MESSAGE = 0xE0;
+const CAPABILITY_QUERY = 0x6B;
+const CAPABILITY_RESPONSE = 0x6C;
+const DIGITAL_MESSAGE = 0x90;
+const END_SYSEX = 0xF7;
+const EXTENDED_ANALOG = 0x6F;
+const I2C_CONFIG = 0x78;
+const I2C_REPLY = 0x77;
+const I2C_REQUEST = 0x76;
+const I2C_READ_MASK = 0x18;   // 0b00011000
+// const I2C_END_TX_MASK = 0x40; // 0b01000000
+const ONEWIRE_CONFIG_REQUEST = 0x41;
+const ONEWIRE_DATA = 0x73;
+const ONEWIRE_DELAY_REQUEST_BIT = 0x10;
+const ONEWIRE_READ_REPLY = 0x43;
+const ONEWIRE_READ_REQUEST_BIT = 0x08;
+const ONEWIRE_RESET_REQUEST_BIT = 0x01;
+const ONEWIRE_SEARCH_ALARMS_REPLY = 0x45;
+const ONEWIRE_SEARCH_ALARMS_REQUEST = 0x44;
+const ONEWIRE_SEARCH_REPLY = 0x42;
+const ONEWIRE_SEARCH_REQUEST = 0x40;
+const ONEWIRE_WITHDATA_REQUEST_BITS = 0x3C;
+const ONEWIRE_WRITE_REQUEST_BIT = 0x20;
+const PIN_MODE = 0xF4;
+const PIN_STATE_QUERY = 0x6D;
+const PIN_STATE_RESPONSE = 0x6E;
+const PING_READ = 0x75;
+// const PULSE_IN = 0x74;
+// const PULSE_OUT = 0x73;
+const QUERY_FIRMWARE = 0x79;
+const REPORT_ANALOG = 0xC0;
+const REPORT_DIGITAL = 0xD0;
+const REPORT_VERSION = 0xF9;
+const SAMPLING_INTERVAL = 0x7A;
+const SERVO_CONFIG = 0x70;
+const SERIAL_MESSAGE = 0x60;
+const SERIAL_CONFIG = 0x10;
+const SERIAL_WRITE = 0x20;
+const SERIAL_READ = 0x30;
+const SERIAL_REPLY = 0x40;
+const SERIAL_CLOSE = 0x50;
+const SERIAL_FLUSH = 0x60;
+const SERIAL_LISTEN = 0x70;
+const START_SYSEX = 0xF0;
+const STEPPER = 0x72;
+const ACCELSTEPPER = 0x62;
+const STRING_DATA = 0x71;
+const SYSTEM_RESET = 0xFF;
 
+const MAX_PIN_COUNT = 128;
+
+const SYM_sendOneWireSearch = Symbol("sendOneWireSearch");
+const SYM_sendOneWireRequest = Symbol("sendOneWireRequest");
 
 /**
  * MIDI_RESPONSE contains functions to be called when we receive a MIDI message from the arduino.
@@ -79,33 +87,40 @@ const i2cActive = new Map();
  * @private
  */
 
- const MIDI_RESPONSE = {
+const MIDI_RESPONSE = {
+
+  /**
+   * Handles a REPORT_VERSION response and emits the reportversion event.
+   * @private
+   * @param board the current arduino board we are working with.
+   */
+
   [REPORT_VERSION](board: Firmata) {
     board.version.major = board.buffer[1];
     board.version.minor = board.buffer[2];
-    board.dispatchEvent(new Event("reportversion"));
-    console.log(board.version)
+    board.emit("reportversion");
   },
 
   /**
    * Handles a ANALOG_MESSAGE response and emits "analog-read" and "analog-read-"+n events where n is the pin number.
    * @private
-   * @param {Board} board the current arduino board we are working with.
+   * @param board the current arduino board we are working with.
    */
 
   [ANALOG_MESSAGE](board: Firmata) {
     const pin = board.buffer[0] & 0x0F;
     const value = board.buffer[1] | (board.buffer[2] << 7);
 
+    /* istanbul ignore else */
     if (board.pins[board.analogPins[pin]]) {
       board.pins[board.analogPins[pin]].value = value;
     }
 
-    //board.emit(`analog-read-${pin}`, value);
-    board.dispatchEvent(new CustomEvent("analog-read-${pin}", {detail:{
+    board.emit(`analog-read-${pin}`, value);
+    board.emit("analog-read", {
       pin,
       value,
-    }}));
+    });
   },
 
   /**
@@ -116,7 +131,7 @@ const i2cActive = new Map();
    * Where n is the pin number.
    *
    * @private
-   * @param {Board} board the current arduino board we are working with.
+   * @param board the current arduino board we are working with.
    */
 
   [DIGITAL_MESSAGE](board: Firmata) {
@@ -139,16 +154,11 @@ const i2cActive = new Map();
 
         let {value} = pinRec;
 
-        //board.emit(`digital-read-${pin}`, value);
-        //board.emit("digital-read", {
-        //  pin,
-        //  value,
-        //});
-        board.dispatchEvent(new CustomEvent(`digital-read-${pin}`, {detail:value}));
-        board.dispatchEvent(new CustomEvent("digital-read", {detail:{
+        board.emit(`digital-read-${pin}`, value);
+        board.emit("digital-read", {
           pin,
           value,
-        }}));
+        });
       }
     }
   },
@@ -165,10 +175,10 @@ const SYSEX_RESPONSE = {
   /**
    * Handles a QUERY_FIRMWARE response and emits the "queryfirmware" event
    * @private
-   * @param {Board} board the current arduino board we are working with.
+   * @param board the current arduino board we are working with.
    */
 
-  [QUERY_FIRMWARE](board) {
+  [QUERY_FIRMWARE](board: Firmata) {
     const length = board.buffer.length - 2;
     const buffer = Buffer.alloc(Math.round((length - 4) / 2));
     let byte = 0;
@@ -187,21 +197,18 @@ const SYSEX_RESPONSE = {
       },
     },
 
-    
-    //board.emit("queryfirmware");
-    board.dispatchEvent(new Event("queryfirmware"));
-    console.log(board.firmware)
+    board.emit("queryfirmware");
   },
 
   /**
    * Handles a CAPABILITY_RESPONSE response and emits the "capability-query" event
    * @private
-   * @param {Board} board the current arduino board we are working with.
+   * @param board the current arduino board we are working with.
    */
 
-  [CAPABILITY_RESPONSE](board) {
+  [CAPABILITY_RESPONSE](board: Firmata) {
     const modes = Object.keys(board.MODES).map((key) => board.MODES[key]);
-    let mode, resolution;
+    let mode: number, resolution: number;
     let capability = 0;
 
     function supportedModes(capability) {
@@ -251,8 +258,7 @@ const SYSEX_RESPONSE = {
       }
     }
 
-    //board.emit("capability-query");
-    board.dispatchEvent(new Event("capability-query"));
+    board.emit("capability-query");
   },
 
   /**
@@ -262,10 +268,10 @@ const SYSEX_RESPONSE = {
    * previously written to the pin. For input modes, the state is the status of
    * the pullup resistor.
    * @private
-   * @param {Board} board the current arduino board we are working with.
+   * @param board the current arduino board we are working with.
    */
 
-  [PIN_STATE_RESPONSE](board) {
+  [PIN_STATE_RESPONSE](board: Firmata) {
     let pin = board.buffer[2];
     board.pins[pin].mode = board.buffer[3];
     board.pins[pin].state = board.buffer[4];
@@ -275,17 +281,16 @@ const SYSEX_RESPONSE = {
     if (board.buffer.length > 7) {
       board.pins[pin].state |= (board.buffer[6] << 14);
     }
-    //board.emit(`pin-state-${pin}`);
-    board.dispatchEvent(new Event(`pin-state-${pin}`));
+    board.emit(`pin-state-${pin}`);
   },
 
   /**
    * Handles a ANALOG_MAPPING_RESPONSE response and emits the "analog-mapping-query" event.
    * @private
-   * @param {Board} board the current arduino board we are working with.
+   * @param board the current arduino board we are working with.
    */
 
-  [ANALOG_MAPPING_RESPONSE](board) {
+  [ANALOG_MAPPING_RESPONSE](board: Firmata) {
     let pin = 0;
     let currentValue;
     for (let i = 2; i < board.buffer.length - 1; i++) {
@@ -296,18 +301,17 @@ const SYSEX_RESPONSE = {
       }
       pin++;
     }
-    //board.emit("analog-mapping-query");
-    board.dispatchEvent(new Event("analog-mapping-query"));
+    board.emit("analog-mapping-query");
   },
 
   /**
    * Handles a I2C_REPLY response and emits the "I2C-reply-"+n event where n is the slave address of the I2C device.
    * The event is passed the buffer of data sent from the I2C Device
    * @private
-   * @param {Board} board the current arduino board we are working with.
+   * @param board the current arduino board we are working with.
    */
 
-  [I2C_REPLY](board) {
+  [I2C_REPLY](board: Firmata) {
     const reply = [];
     const address = (board.buffer[2] & 0x7F) | ((board.buffer[3] & 0x7F) << 7);
     const register = (board.buffer[4] & 0x7F) | ((board.buffer[5] & 0x7F) << 7);
@@ -316,11 +320,10 @@ const SYSEX_RESPONSE = {
       reply.push(board.buffer[i] | (board.buffer[i + 1] << 7));
     }
 
-    //board.emit(`I2C-reply-${address}-${register}`, reply);
-    board.dispatchEvent(new CustomEvent(`I2C-reply-${address}-${register}`, {detail:reply}));
+    board.emit(`I2C-reply-${address}-${register}`, reply);
   },
 
-  [ONEWIRE_DATA](board) {
+  [ONEWIRE_DATA](board: Firmata) {
     const subCommand = board.buffer[2];
 
     if (!SYSEX_RESPONSE[subCommand]) {
@@ -330,47 +333,43 @@ const SYSEX_RESPONSE = {
     SYSEX_RESPONSE[subCommand](board);
   },
 
-  [ONEWIRE_SEARCH_REPLY](board) {
+  [ONEWIRE_SEARCH_REPLY](board: Firmata) {
     const pin = board.buffer[3];
     const buffer = board.buffer.slice(4, board.buffer.length - 1);
 
-    //board.emit(`1-wire-search-reply-${pin}`, OneWireUtils.readDevices(buffer));
-    board.dispatchEvent(new CustomEvent(`1-wire-search-reply-${pin}`, {detail:OneWireUtils.readDevices(buffer)}));
+    board.emit(`1-wire-search-reply-${pin}`, OneWire.readDevices(buffer));
   },
 
-  [ONEWIRE_SEARCH_ALARMS_REPLY](board) {
+  [ONEWIRE_SEARCH_ALARMS_REPLY](board: Firmata) {
     const pin = board.buffer[3];
     const buffer = board.buffer.slice(4, board.buffer.length - 1);
 
-    //board.emit(`1-wire-search-alarms-reply-${pin}`, OneWireUtils.readDevices(buffer));
-    board.dispatchEvent(new CustomEvent(`1-wire-search-alarms-reply-${pin}`, {detail:OneWireUtils.readDevices(buffer)}));
+    board.emit(`1-wire-search-alarms-reply-${pin}`, OneWire.readDevices(buffer));
   },
 
-  [ONEWIRE_READ_REPLY](board) {
+  [ONEWIRE_READ_REPLY](board: Firmata) {
     const encoded = board.buffer.slice(4, board.buffer.length - 1);
     const decoded = Encoder7Bit.from7BitArray(encoded);
     const correlationId = (decoded[1] << 8) | decoded[0];
 
-    //board.emit(`1-wire-read-reply-${correlationId}`, decoded.slice(2));
-    board.dispatchEvent(new CustomEvent(`1-wire-read-reply-${correlationId}`, {detail:decoded.slice(2)}));
+    board.emit(`1-wire-read-reply-${correlationId}`, decoded.slice(2));
   },
 
   /**
    * Handles a STRING_DATA response and logs the string to the console.
    * @private
-   * @param {Board} board the current arduino board we are working with.
+   * @param board the current arduino board we are working with.
    */
 
-  [STRING_DATA](board) {
-    //board.emit("string", Buffer.from(board.buffer.slice(2, -1)).toString().replace(/\0/g, ""));
-    board.dispatchEvent(new CustomEvent("string", {detail:Buffer.from(board.buffer.slice(2, -1)).toString().replace(/\0/g, "")}));
+  [STRING_DATA](board: Firmata) {
+    board.emit("string", Buffer.from(board.buffer.slice(2, -1)).toString().replace(/\0/g, ""));
   },
 
   /**
    * Response from pingRead
    */
 
-  [PING_READ](board) {
+  [PING_READ](board: Firmata) {
     const pin = (board.buffer[2] & 0x7F) | ((board.buffer[3] & 0x7F) << 7);
     const durationBuffer = [
       (board.buffer[4] & 0x7F) | ((board.buffer[5] & 0x7F) << 7),
@@ -382,27 +381,25 @@ const SYSEX_RESPONSE = {
       (durationBuffer[1] << 16) +
       (durationBuffer[2] << 8) +
       (durationBuffer[3]));
-    //board.emit(`ping-read-${pin}`, duration);
-    board.dispatchEvent(new CustomEvent(`ping-read-${pin}`, {detail:duration}));
+    board.emit(`ping-read-${pin}`, duration);
   },
 
   /**
    * Handles the message from a stepper completing move
-   * @param {Board} board
+   * @param board
    */
 
-  [STEPPER](board) {
+  [STEPPER](board: Firmata) {
     const deviceNum = board.buffer[2];
-    //board.emit(`stepper-done-${deviceNum}`, true);
-    board.dispatchEvent(new CustomEvent(`stepper-done-${deviceNum}`, {detail:true}));
+    board.emit(`stepper-done-${deviceNum}`, true);
   },
 
   /**
    * Handles the message from a stepper or group of steppers completing move
-   * @param {Board} board
+   * @param board
    */
 
-  [ACCELSTEPPER](board) {
+  [ACCELSTEPPER](board: Firmata) {
     const command = board.buffer[2];
     const deviceNum = board.buffer[3];
     const value = command === 0x06 || command === 0x0A ?
@@ -424,10 +421,10 @@ const SYSEX_RESPONSE = {
    * serial port.
    * The event is passed the buffer of data sent from the serial device
    * @private
-   * @param {Board} board the current arduino board we are working with.
+   * @param board the current arduino board we are working with.
    */
 
-  [SERIAL_MESSAGE](board) {
+  [SERIAL_MESSAGE](board: Firmata) {
     const command = board.buffer[2] & START_SYSEX;
     const portId = board.buffer[2] & 0x0F;
     const reply = [];
@@ -440,199 +437,387 @@ const SYSEX_RESPONSE = {
       board.emit(`serial-data-${portId}`, reply);
     }
   },
-
-
 };
 
+/**
+ * The default transport class
+ */
 
-type Version = {
-  major: number;
-  minor: number;
-}
+let Transport: WebSerialPort = null;
 
-type Pin = {
-  mode: PinMode
-  value: number
-  report: number
-  supportedModes: PinMode[]
-}
 
-const defaultPin: Pin = {
-  mode: PinMode.PIN_MODE_OUTPUT,
-  value: 0,
-  report: 0,
-  supportedModes: [PinMode.PIN_MODE_INPUT, PinMode.PIN_MODE_OUTPUT]
-}
+/**
+ * @class The Board object represents an arduino board.
+ * @augments EventEmitter
+ * @param {String} port This is the serial port the arduino is connected to.
+ * @param function A function to be called when the arduino is ready to communicate.
+ * @property MODES All the modes available for pins on this arduino board.
+ * @property I2C_MODES All the I2C modes available.
+ * @property SERIAL_MODES All the Serial modes available.
+ * @property SERIAL_PORT_ID ID values to pass as the portId parameter when calling serialConfig.
+ * @property HIGH A constant to set a pins value to HIGH when the pin is set to an output.
+ * @property LOW A constant to set a pins value to LOW when the pin is set to an output.
+ * @property pins An array of pin object literals.
+ * @property analogPins An array of analog pins and their corresponding indexes in the pins array.
+ * @property version An object indicating the major and minor version of the firmware currently running.
+ * @property firmware An object indicating the name, major and minor version of the firmware currently running.
+ * @property buffer An array holding the current bytes received from the arduino.
+ * @property {SerialPort} sp The serial port object used to communicate with the arduino.
+ */
 
-class Firmata extends EventTarget {
-  static SYSEX_RESPONSE = SYSEX_RESPONSE
-  static MIDI_RESPONSE = MIDI_RESPONSE
+export class Firmata extends EventEmitter {
+  static SYSEX_RESPONSE = SYSEX_RESPONSE;
+  static MIDI_RESPONSE = MIDI_RESPONSE;
+  static Board = this
+  static test
 
-  currentPinMode : Array<PinMode>
-  currentDigitalWrite : Array<Digital>
-  reportedDigitalRead : Array<Digital>
-  pins: Pin[] = Array(50).fill(defaultPin)
-  ports = new Array<number>(16).fill(0)
-  analogPins: number[] = []
+  transport: WebSerialPort;
   buffer: number[] = []
-  name = 'Firmata'
-  pending: number = 0
-  digitalPortQueue = 0x0000
-  versionReceived = false
+  isReady = false;
+  settings: any
+  _events: string[] = []
+
+  MODES = {
+    INPUT: 0x00,
+    OUTPUT: 0x01,
+    ANALOG: 0x02,
+    PWM: 0x03,
+    SERVO: 0x04,
+    SHIFT: 0x05,
+    I2C: 0x06,
+    ONEWIRE: 0x07,
+    STEPPER: 0x08,
+    SERIAL: 0x0A,
+    PULLUP: 0x0B,
+    IGNORE: 0x7F,
+    PING_READ: 0x75,
+    UNKOWN: 0x10,
+  };
+
+  I2C_MODES = {
+    WRITE: 0,
+    READ: 1,
+    CONTINUOUS_READ: 2,
+    STOP_READING: 3,
+  };
+
+  STEPPER = {
+    TYPE: {
+      DRIVER: 1,
+      TWO_WIRE: 2,
+      THREE_WIRE: 3,
+      FOUR_WIRE: 4,
+    },
+    STEP_SIZE: {
+      WHOLE: 0,
+      HALF: 1
+    },
+    RUN_STATE: {
+      STOP: 0,
+      ACCEL: 1,
+      DECEL: 2,
+      RUN: 3,
+    },
+    DIRECTION: {
+      CCW: 0,
+      CW: 1,
+    },
+  };
+
+  SERIAL_MODES = {
+    CONTINUOUS_READ: 0x00,
+    STOP_READING: 0x01,
+  };
+
+  // ids for hardware and software serial ports on the board
+  SERIAL_PORT_IDs = {
+    HW_SERIAL0: 0x00,
+    HW_SERIAL1: 0x01,
+    HW_SERIAL2: 0x02,
+    HW_SERIAL3: 0x03,
+    SW_SERIAL0: 0x08,
+    SW_SERIAL1: 0x09,
+    SW_SERIAL2: 0x10,
+    SW_SERIAL3: 0x11,
+
+    // Default can be used by dependant libraries to key on a
+    // single property name when negotiating ports.
+    //
+    // Firmata elects SW_SERIAL0: 0x08 as its DEFAULT
+    DEFAULT: 0x08,
+  };
+
+  // map to the pin resolution value in the capability query response
+  SERIAL_PIN_TYPES = {
+    RES_RX0: 0x00,
+    RES_TX0: 0x01,
+    RES_RX1: 0x02,
+    RES_TX1: 0x03,
+    RES_RX2: 0x04,
+    RES_TX2: 0x05,
+    RES_RX3: 0x06,
+    RES_TX3: 0x07,
+  };
+
+  RESOLUTION = {
+    ADC: null,
+    DAC: null,
+    PWM: null,
+  };
 
   HIGH = 1;
   LOW = 0;
-  version: Version  = {
-    major: 0,
-    minor: 0,
+  pins: Pin[] = [];
+  ports = Array(16).fill(0);
+  analogPins = [];
+  version: {
+    major: number;
+    minor: number;
   }
-  firmware
-  settings
-  isReady
-  MODES
+  firmware = {};
+  versionReceived = false;
+  name = "Firmata";
+  pending = 0;
+  digitalPortQueue = 0x0000;
 
-  I2C_MODES
-  STEPPER
-  SERIAL_MODES
-  SERIAL_PORT_IDs
-  SERIAL_PIN_TYPES
-  RESOLUTION
-  transport
   reportVersionTimeoutId
 
-  constructor() {
-    super()
-    this.pins[13] = {
-      mode: PinMode.PIN_MODE_OUTPUT,
-      value: 0,
-      report: 0,
-      supportedModes: [PinMode.PIN_MODE_OUTPUT],
+  constructor(port:WebSerialPort, options?, callback?) {
+    super();
+
+    if (typeof options === "function" || typeof options === "undefined") {
+      callback = options;
+      options = {};
     }
-    this.currentPinMode = new Array<PinMode>(50).fill(PinMode.PIN_MODE_INPUT)
-    this.currentDigitalWrite = new Array<Digital>(50).fill(0)
-    this.reportedDigitalRead = new Array<Digital>(50).fill(0)
-  }
 
-  toggleLed() {
-    this.digitalWrite(13, 1, false);
-    //this.emit('data', [0x90, 13, 1])
-    //this.currentDigitalWrite[13] ^= 1
-    //ws.sendMessage$.next(new Uint8Array([CommandByte.SET_DIGITAL_PIN_VALUE, 13, this.currentDigitalWrite[13]]))
-  }
+    const board = this;
+    const defaults = {
+      reportVersionTimeout: 5000,
+      samplingInterval: 19,
+      serialport: {
+        baudRate: 57600,
+        // https://github.com/node-serialport/node-serialport/blob/5.0.0/UPGRADE_GUIDE.md#open-options
+        highWaterMark: 256,
+      },
+    };
 
-  readADC() {
-    writeToTransport(this, [CommandByte.REPORT_ANALOG, 0, 1])
-  }
+    const settings = Object.assign({}, defaults, options);
+    this.settings = settings;
+    
+    if (typeof port === "object") {
+      this.transport = port;
+    } else {
+      throw new Error("Missing Transport");
+    }
 
+    this.transport.on("close", event => {
 
-  receiveHandler(data: number[]) {
-    for (let i = 0; i < data.length; i++) {
-      let byte = data[i];
-      // we dont want to push 0 as the first byte on our buffer
-      if (this.buffer.length === 0 && byte === 0) {
-        continue;
+      // https://github.com/node-serialport/node-serialport/blob/5.0.0/UPGRADE_GUIDE.md#opening-and-closing
+      if (event && event.disconnect && event.disconnected) {
+        this.emit("disconnect");
+        return;
+      }
+
+      this.emit("close");
+    });
+
+    this.transport.on("open", event => {
+      this.emit("open", event);
+      // Legacy
+      this.emit("connect", event);
+    });
+
+    this.transport.on("error", error => {
+      if (!this.isReady && typeof callback === "function") {
+        callback(error);
       } else {
-        this.buffer.push(byte);
+        this.emit("error", error);
+      }
+    });
 
-        let first = this.buffer[0];
-        let last = this.buffer[this.buffer.length - 1];
-
-        // [START_SYSEX, ... END_SYSEX]
-        if (first === START_SYSEX && last === END_SYSEX) {
-
-          let handler = SYSEX_RESPONSE[this.buffer[1]];
-
-          // Ensure a valid SYSEX_RESPONSE handler exists
-          // Only process these AFTER the REPORT_VERSION
-          // message has been received and processed.
-          if (handler && this.versionReceived) {
-            handler(this);
-          }
-
-          // It is possible for the board to have
-          // existing activity from a previous run
-          // that will leave any of the following
-          // active:
-          //
-          //    - ANALOG_MESSAGE
-          //    - SERIAL_READ
-          //    - I2C_REQUEST, CONTINUOUS_READ
-          //
-          // This means that we will receive these
-          // messages on transport "open", before any
-          // handshake can occur. We MUST assert
-          // that we will only process this buffer
-          // AFTER the REPORT_VERSION message has
-          // been received. Not doing so will result
-          // in the appearance of the program "hanging".
-          //
-          // Since we cannot do anything with this data
-          // until _after_ REPORT_VERSION, discard it.
-          //
-          this.buffer.length = 0;
-
-        } else if (first === START_SYSEX && (this.buffer.length > 0)) {
-          // we have a new command after an incomplete sysex command
-          let currByte = data[i];
-          if (currByte > 0x7F) {
-            this.buffer.length = 0;
-            this.buffer.push(currByte);
-          }
+    this.transport.on("data", data => {
+      for (let i = 0; i < data.length; i++) {
+        let byte = data[i];
+        // we dont want to push 0 as the first byte on our buffer
+        if (this.buffer.length === 0 && byte === 0) {
+          continue;
         } else {
-          /* istanbul ignore else */
-          if (first !== START_SYSEX) {
-            // Check if data gets out of sync: first byte in buffer
-            // must be a valid response if not START_SYSEX
-            // Identify response on first byte
+          this.buffer.push(byte);
+
+          let first = this.buffer[0];
+          let last = this.buffer[this.buffer.length - 1];
+
+          // [START_SYSEX, ... END_SYSEX]
+          if (first === START_SYSEX && last === END_SYSEX) {
+
+            let handler = SYSEX_RESPONSE[this.buffer[1]];
+
+            // Ensure a valid SYSEX_RESPONSE handler exists
+            // Only process these AFTER the REPORT_VERSION
+            // message has been received and processed.
+            if (handler && this.versionReceived) {
+              handler(this);
+            }
+
+            // It is possible for the board to have
+            // existing activity from a previous run
+            // that will leave any of the following
+            // active:
+            //
+            //    - ANALOG_MESSAGE
+            //    - SERIAL_READ
+            //    - I2C_REQUEST, CONTINUOUS_READ
+            //
+            // This means that we will receive these
+            // messages on transport "open", before any
+            // handshake can occur. We MUST assert
+            // that we will only process this buffer
+            // AFTER the REPORT_VERSION message has
+            // been received. Not doing so will result
+            // in the appearance of the program "hanging".
+            //
+            // Since we cannot do anything with this data
+            // until _after_ REPORT_VERSION, discard it.
+            //
+            this.buffer.length = 0;
+
+          } else if (first === START_SYSEX && (this.buffer.length > 0)) {
+            // we have a new command after an incomplete sysex command
+            let currByte = data[i];
+            if (currByte > 0x7F) {
+              this.buffer.length = 0;
+              this.buffer.push(currByte);
+            }
+          } else {
+            /* istanbul ignore else */
+            if (first !== START_SYSEX) {
+              // Check if data gets out of sync: first byte in buffer
+              // must be a valid response if not START_SYSEX
+              // Identify response on first byte
+              let response = first < START_SYSEX ? (first & START_SYSEX) : first;
+
+              // Check if the first byte is possibly
+              // a valid MIDI_RESPONSE (handler)
+              /* istanbul ignore else */
+              if (response !== REPORT_VERSION &&
+                  response !== ANALOG_MESSAGE &&
+                  response !== DIGITAL_MESSAGE) {
+                // If not valid, then we received garbage and can discard
+                // whatever bytes have been been queued.
+                this.buffer.length = 0;
+              }
+            }
+          }
+
+          // There are 3 bytes in the buffer and the first is not START_SYSEX:
+          // Might have a MIDI Command
+          if (this.buffer.length === 3 && first !== START_SYSEX) {
+            // response bytes under 0xF0 we have a multi byte operation
             let response = first < START_SYSEX ? (first & START_SYSEX) : first;
 
-            // Check if the first byte is possibly
-            // a valid MIDI_RESPONSE (handler)
             /* istanbul ignore else */
-            if (response !== REPORT_VERSION &&
-                response !== ANALOG_MESSAGE &&
-                response !== DIGITAL_MESSAGE) {
-              // If not valid, then we received garbage and can discard
-              // whatever bytes have been been queued.
+            if (MIDI_RESPONSE[response]) {
+              // It's ok that this.versionReceived will be set to
+              // true every time a valid MIDI_RESPONSE is received.
+              // This condition is necessary to ensure that REPORT_VERSION
+              // is called first.
+              if (this.versionReceived || first === REPORT_VERSION) {
+                this.versionReceived = true;
+                MIDI_RESPONSE[response](this);
+              }
+              this.buffer.length = 0;
+            } else {
+              // A bad serial read must have happened.
+              // Reseting the buffer will allow recovery.
               this.buffer.length = 0;
             }
           }
         }
+      }
+    });
 
-        // There are 3 bytes in the buffer and the first is not START_SYSEX:
-        // Might have a MIDI Command
-        if (this.buffer.length === 3 && first !== START_SYSEX) {
-          // response bytes under 0xF0 we have a multi byte operation
-          let response = first < START_SYSEX ? (first & START_SYSEX) : first;
+    // if we have not received the version within the allotted
+    // time specified by the reportVersionTimeout (user or default),
+    // then send an explicit request for it.
+    this.reportVersionTimeoutId = setTimeout(() => {
+      /* istanbul ignore else */
+      if (this.versionReceived === false) {
+        this.reportVersion(function() {});
+        this.queryFirmware(function() {});
+      }
+    }, settings.reportVersionTimeout);
 
-          /* istanbul ignore else */
-          if (MIDI_RESPONSE[response]) {
-            // It's ok that this.versionReceived will be set to
-            // true every time a valid MIDI_RESPONSE is received.
-            // This condition is necessary to ensure that REPORT_VERSION
-            // is called first.
-            if (this.versionReceived || first === REPORT_VERSION) {
-              this.versionReceived = true;
-              MIDI_RESPONSE[response](this);
-            }
-            this.buffer.length = 0;
-          } else {
-            // A bad serial read must have happened.
-            // Reseting the buffer will allow recovery.
-            this.buffer.length = 0;
-          }
-        }
+    function ready() {
+      board.isReady = true;
+      board.emit("ready");
+      /* istanbul ignore else */
+      if (typeof callback === "function") {
+        callback();
       }
     }
+
+    // Await the reported version.
+    this.once("reportversion", () => {
+      clearTimeout(this.reportVersionTimeoutId);
+      this.versionReceived = true;
+      this.once("queryfirmware", () => {
+
+        // Only preemptively set the sampling interval if `samplingInterval`
+        // property was _explicitly_ set as a constructor option.
+        if (options.samplingInterval !== undefined) {
+          this.setSamplingInterval(options.samplingInterval);
+        }
+        if (settings.skipCapabilities) {
+          this.analogPins = settings.analogPins || this.analogPins;
+          this.pins = settings.pins || this.pins;
+          /* istanbul ignore else */
+          if (!this.pins.length) {
+            for (var i = 0; i < (settings.pinCount || MAX_PIN_COUNT); i++) {
+              var supportedModes: number[] = [];
+              var analogChannel = this.analogPins.indexOf(i);
+
+              if (analogChannel < 0) {
+                analogChannel = 127;
+              }
+              this.pins.push({supportedModes, analogChannel});
+            }
+          }
+
+          // If the capabilities query is skipped,
+          // default resolution values will be used.
+          //
+          // Based on ATmega328/P
+          //
+          this.RESOLUTION.ADC = 0x3FF;
+          this.RESOLUTION.PWM = 0x0FF;
+
+          ready();
+        } else {
+          this.queryCapabilities(() => {
+            this.queryAnalogMapping(ready);
+          });
+        }
+      });
+    });
   }
 
-  
+  /**
+   * Asks the arduino to tell us its version.
+   * @param callback A function to be called when the arduino has reported its version.
+   */
+
+  reportVersion(callback: () => void) {
+    this.once("reportversion", callback);
+    writeToTransport(this, [REPORT_VERSION]);
+  }
+
   /**
    * Asks the arduino to tell us its firmware version.
-   * @param {function} callback A function to be called when the arduino has reported its firmware version.
+   * @param callback A function to be called when the arduino has reported its firmware version.
    */
-  queryFirmware(callback?) {
-    this.addEventListener("queryfirmware", callback, { once: true });
+
+  queryFirmware(callback?: () => void) {
+    this.once("queryfirmware", callback);
     writeToTransport(this, [
       START_SYSEX,
       QUERY_FIRMWARE,
@@ -640,26 +825,27 @@ class Firmata extends EventTarget {
     ]);
   }
 
-  
+
+
   /**
    * Asks the arduino to read analog data. Turn on reporting for this pin.
-   * @param {number} pin The pin to read analog data
-   * @param {function} callback A function to call when we have the analag data.
+   * @param pin The pin to read analog data
+   * @param callback A function to call when we have the analag data.
    */
 
-   analogRead(pin, callback) {
+  analogRead(pin: number, callback: (analogValue: number) => void) {
     this.reportAnalogPin(pin, 1);
-    this.addEventListener(`analog-read-${pin}`, callback);
+    this.addListener(`analog-read-${pin}`, callback);
   }
 
   /**
    * Write a PWM value Asks the arduino to write an analog message.
-   * @param {number} pin The pin to write analog data to.
-   * @param {number} value The data to write to the pin between 0 and this.RESOLUTION.PWM.
+   * @param pin The pin to write analog data to.
+   * @param value The data to write to the pin between 0 and this.RESOLUTION.PWM.
    */
 
-  pwmWrite(pin, value) {
-    let data;
+  pwmWrite(pin: number, value: number) {
+    let data: number[];
 
     this.pins[pin].value = value;
 
@@ -696,17 +882,15 @@ class Firmata extends EventTarget {
     writeToTransport(this, data);
   }
 
-  // alias
-  analogWrite = this.pwmWrite
-
   /**
    * Set a pin to SERVO mode with an explicit PWM range.
    *
-   * @param {number} pin The pin the servo is connected to
-   * @param {number} min A 14-bit signed int.
-   * @param {number} max A 14-bit signed int.
+   * @param pin The pin the servo is connected to
+   * @param min A 14-bit signed int.
+   * @param max A 14-bit signed int.
    */
-   servoConfig(pin, min, max) {
+
+  servoConfig(pin: number | {pin:number, min:number, max:number}, min?: number, max?: number) {
     if (typeof pin === "object" && pin !== null) {
       let temp = pin;
       pin = temp.pin;
@@ -734,13 +918,12 @@ class Firmata extends EventTarget {
     // [5]  maxPulse LSB (0-6)
     // [6]  maxPulse MSB (7-13)
     // [7]  END_SYSEX    (0xF7)
-
-    this.pins[pin].mode = this.MODES.SERVO;
+    this.pins[pin as number].mode = this.MODES.SERVO;
 
     writeToTransport(this, [
       START_SYSEX,
       SERVO_CONFIG,
-      pin,
+      pin as number,
       min & 0x7F,
       (min >> 7) & 0x7F,
       max & 0x7F,
@@ -751,23 +934,17 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the arduino to move a servo
-   * @param {number} pin The pin the servo is connected to
-   * @param {number} value The degrees to move the servo to.
+   * @param pin The pin the servo is connected to
+   * @param value The degrees to move the servo to.
    */
-
-  servoWrite(pin: number, value: number) {
-    // Values less than 544 will be treated as angles in degrees
-    // (valid values in microseconds are handled as microseconds)
-    this.analogWrite(pin, value);
-  }
 
   /**
    * Asks the arduino to set the pin to a certain mode.
-   * @param {number} pin The pin you want to change the mode of.
-   * @param {number} mode The mode you want to set. Must be one of board.MODES
+   * @param pin The pin you want to change the mode of.
+   * @param mode The mode you want to set. Must be one of board.MODES
    */
 
-  pinMode(pin, mode) {
+  pinMode(pin: number, mode: number) {
     if (mode === this.MODES.ANALOG) {
       // Because pinMode may be called before analogRead(pin, () => {}), but isn't
       // necessary to initiate an analog read on an analog pin, we'll assign the
@@ -790,12 +967,12 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the arduino to write a value to a digital pin
-   * @param {number} pin The pin you want to write a value to.
-   * @param {number} value The value you want to write. Must be board.HIGH or board.LOW
-   * @param {boolean} enqueue When true, the local state is updated but the command is not sent to the Arduino
+   * @param pin The pin you want to write a value to.
+   * @param value The value you want to write. Must be board.HIGH or board.LOW
+   * @param enqueue When true, the local state is updated but the command is not sent to the Arduino
    */
 
-  digitalWrite(pin: number, value: number, enqueue: boolean = false) {
+  digitalWrite(pin: number, value: number, enqueue?: boolean) {
     let port = this.updateDigitalPort(pin, value);
 
     if (enqueue) {
@@ -807,11 +984,11 @@ class Firmata extends EventTarget {
 
   /**
    * Update local store of digital port state
-   * @param {number} pin The pin you want to write a value to.
-   * @param {number} value The value you want to write. Must be board.HIGH or board.LOW
+   * @param pin The pin you want to write a value to.
+   * @param value The value you want to write. Must be board.HIGH or board.LOW
    */
 
-  updateDigitalPort(pin, value) {
+  updateDigitalPort(pin: number, value: number) {
     const port = pin >> 3;
     const bit = 1 << (pin & 0x07);
 
@@ -841,7 +1018,7 @@ class Firmata extends EventTarget {
 
   /**
    * Update a digital port (group of 8 digital pins) on the Arduino
-   * @param {number} port The port you want to update.
+   * @param port The port you want to update.
    */
 
   writeDigitalPort(port: number) {
@@ -855,22 +1032,22 @@ class Firmata extends EventTarget {
   /**
    * Asks the arduino to read digital data. Turn on reporting for this pin's port.
    *
-   * @param {number} pin The pin to read data from
-   * @param {function} callback The function to call when data has been received
+   * @param pin The pin to read data from
+   * @param callback The function to call when data has been received
    */
 
-  digitalRead(pin: number, callback: any) {
+  digitalRead(pin: number, callback: (value: number) => void) {
     this.reportDigitalPin(pin, 1);
-    this.addEventListener(`digital-read-${pin}`, callback);
+    this.addListener(`digital-read-${pin}`, callback);
   }
 
   /**
    * Asks the arduino to tell us its capabilities
-   * @param {function} callback A function to call when we receive the capabilities
+   * @param callback A function to call when we receive the capabilities
    */
 
   queryCapabilities(callback) {
-    this.addEventListener("capability-query", callback, {once: true});
+    this.once("capability-query", callback);
     writeToTransport(this, [
       START_SYSEX,
       CAPABILITY_QUERY,
@@ -880,11 +1057,11 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the arduino to tell us its analog pin mapping
-   * @param {(function)} callback A function to call when we receive the pin mappings.
+   * @param callback A function to call when we receive the pin mappings.
    */
 
-  queryAnalogMapping(callback) {
-    this.addEventListener("analog-mapping-query", callback, {once: true});
+  queryAnalogMapping(callback: () => void) {
+    this.once("analog-mapping-query", callback);
     writeToTransport(this, [
       START_SYSEX,
       ANALOG_MAPPING_QUERY,
@@ -894,12 +1071,12 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the arduino to tell us the current state of a pin
-   * @param {number} pin The pin we want to the know the state of
-   * @param {function} callback A function to call when we receive the pin state.
+   * @param pin The pin we want to the know the state of
+   * @param callback A function to call when we receive the pin state.
    */
 
-  queryPinState(pin, callback) {
-    this.addEventListener(`pin-state-${pin}`, callback, {once: true});
+  queryPinState(pin: number, callback: () => void) {
+    this.once(`pin-state-${pin}`, callback);
     writeToTransport(this, [
       START_SYSEX,
       PIN_STATE_QUERY,
@@ -910,10 +1087,10 @@ class Firmata extends EventTarget {
 
   /**
    * Sends a string to the arduino
-   * @param {String} string to send to the device
+   * @param string to send to the device
    */
 
-  sendString(string) {
+  sendString(string: string) {
     const bytes = Buffer.from(`${string}\0`, "utf8");
     const data = [];
 
@@ -933,7 +1110,7 @@ class Firmata extends EventTarget {
    * Sends a I2C config request to the arduino board with an optional
    * value in microseconds to delay an I2C Read.  Must be called before
    * an I2C Read or Write
-   * @param {number} delay in microseconds to set for I2C Read
+   * @param delay in microseconds to set for I2C Read
    */
 
   sendI2CConfig(delay) {
@@ -946,11 +1123,11 @@ class Firmata extends EventTarget {
    *
    * Supersedes sendI2CConfig
    *
-   * @param {number} delay in microseconds to set for I2C Read
+   * @param delay in microseconds to set for I2C Read
    *
    * or
    *
-   * @param {object} with a single property `delay`
+   * @param with a single property `delay`
    */
 
   i2cConfig(options) {
@@ -1014,7 +1191,7 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the arduino to send an I2C request to a device
-   * @param {number} slaveAddress The address of the I2C device
+   * @param slaveAddress The address of the I2C device
    * @param {Array} bytes The bytes to send to the device
    */
 
@@ -1045,13 +1222,13 @@ class Firmata extends EventTarget {
   /**
    * Write data to a register
    *
-   * @param {number} address      The address of the I2C device.
+   * @param address      The address of the I2C device.
    * @param {Array} cmdRegOrData  An array of bytes
    *
    * Write a command to a register
    *
-   * @param {number} address      The address of the I2C device.
-   * @param {number} cmdRegOrData The register
+   * @param address      The address of the I2C device.
+   * @param cmdRegOrData The register
    * @param {Array} inBytes       An array of bytes
    *
    */
@@ -1111,9 +1288,9 @@ class Firmata extends EventTarget {
   /**
    * Write data to a register
    *
-   * @param {number} address    The address of the I2C device.
-   * @param {number} register   The register.
-   * @param {number} byte       The byte value to write.
+   * @param address    The address of the I2C device.
+   * @param register   The register.
+   * @param byte       The byte value to write.
    *
    */
 
@@ -1137,9 +1314,9 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the arduino to request bytes from an I2C device
-   * @param {number} slaveAddress The address of the I2C device
-   * @param {number} numBytes The number of bytes to receive.
-   * @param {function} callback A function to call when we have received the bytes.
+   * @param slaveAddress The address of the I2C device
+   * @param numBytes The number of bytes to receive.
+   * @param callback A function to call when we have received the bytes.
    */
 
   sendI2CReadRequest(address, numBytes, callback) {
@@ -1152,7 +1329,7 @@ class Firmata extends EventTarget {
       (numBytes >> 7) & 0x7F,
       END_SYSEX,
     ]);
-    this.addEventListener(`I2C-reply-${address}-0`, callback, {once: true});
+    this.once(`I2C-reply-${address}-0`, callback);
   }
 
   // TODO: Refactor i2cRead and i2cReadOnce
@@ -1161,10 +1338,10 @@ class Firmata extends EventTarget {
   /**
    * Initialize a continuous I2C read.
    *
-   * @param {number} address    The address of the I2C device
-   * @param {number} register   Optionally set the register to read from.
-   * @param {number} numBytes   The number of bytes to receive.
-   * @param {function} callback A function to call when we have received the bytes.
+   * @param address    The address of the I2C device
+   * @param register   Optionally set the register to read from.
+   * @param numBytes   The number of bytes to receive.
+   * @param callback A function to call when we have received the bytes.
    */
 
   i2cRead(address, register, bytesToRead, callback) {
@@ -1202,7 +1379,7 @@ class Firmata extends EventTarget {
       END_SYSEX
     );
 
-    this.addEventListener(event, callback);
+    this.on(event, callback);
 
     i2cRequest(this, data);
 
@@ -1212,11 +1389,11 @@ class Firmata extends EventTarget {
   /**
    * Stop continuous reading of the specified I2C address or register.
    *
-   * @param {object} options Options:
-   *   bus {number} The I2C bus (on supported platforms)
-   *   address {number} The I2C peripheral address to stop reading.
+   * @param options Options:
+   *   bus The I2C bus (on supported platforms)
+   *   address The I2C peripheral address to stop reading.
    *
-   * @param {number} address The I2C peripheral address to stop reading.
+   * @param address The I2C peripheral address to stop reading.
    */
 
   i2cStop(options) {
@@ -1242,11 +1419,11 @@ class Firmata extends EventTarget {
       END_SYSEX,
     ]);
 
-    //Object.keys(this._events).forEach(event => {
-    //  if (event.startsWith(`I2C-reply-${options.address}`)) {
-    //    this.off(event);
-    //  }
-    //});
+    Object.keys(this._events).forEach(event => {
+      if (event.startsWith(`I2C-reply-${options.address}`)) {
+        this.removeAllListeners(event);
+      }
+    });
   }
 
   /**
@@ -1256,10 +1433,10 @@ class Firmata extends EventTarget {
    *
    * Read bytes from address
    *
-   * @param {number} address    The address of the I2C device
-   * @param {number} register   Optionally set the register to read from.
-   * @param {number} numBytes   The number of bytes to receive.
-   * @param {function} callback A function to call when we have received the bytes.
+   * @param address    The address of the I2C device
+   * @param register   Optionally set the register to read from.
+   * @param numBytes   The number of bytes to receive.
+   * @param callback A function to call when we have received the bytes.
    *
    */
 
@@ -1299,7 +1476,7 @@ class Firmata extends EventTarget {
       END_SYSEX
     );
 
-    this.addEventListener(event, callback, {once: true});
+    this.once(event, callback);
 
     i2cRequest(this, data);
 
@@ -1369,10 +1546,10 @@ class Firmata extends EventTarget {
       /* istanbul ignore next */
       callback(new Error("1-Wire device search timeout - are you running ConfigurableFirmata?"));
     }, 5000);
-    this.addEventListener(event, devices => {
+    this.once(event, devices => {
       clearTimeout(timeout);
       callback(null, devices);
-    }, {once: true});
+    });
   }
 
   /**
@@ -1385,7 +1562,7 @@ class Firmata extends EventTarget {
    * @param callback
    */
 
-  sendOneWireRead(pin: number, device, numBytesToRead, callback) {
+  sendOneWireRead(pin, device, numBytesToRead, callback) {
     const correlationId = Math.floor(Math.random() * 255);
     /* istanbul ignore next */
     const timeout = setTimeout(() => {
@@ -1495,7 +1672,7 @@ class Firmata extends EventTarget {
   }
 
   // see http://firmata.org/wiki/Proposals#OneWire_Proposal
-  [SYM_sendOneWireRequest](pin: number, subcommand, device?, numBytesToRead?, correlationId?, delay?, dataToWrite?, event?, callback?) {
+  [SYM_sendOneWireRequest](pin, subcommand, device?, numBytesToRead?, correlationId?, delay?, dataToWrite?, event?, callback?) {
     const bytes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
     if (device || numBytesToRead || correlationId || delay || dataToWrite) {
@@ -1503,7 +1680,7 @@ class Firmata extends EventTarget {
     }
 
     if (device) {
-      bytes.splice(...[0, 8].concat(device));
+      //bytes.splice(...[0, 8].concat(device)); // error
     }
 
     if (numBytesToRead) {
@@ -1539,16 +1716,16 @@ class Firmata extends EventTarget {
     writeToTransport(this, output);
 
     if (event && callback) {
-      this.addEventListener(event, callback, {once: true});
+      this.once(event, callback);
     }
   }
 
   /**
    * Set sampling interval in millis. Default is 19 ms
-   * @param {number} interval The sampling interval in ms > 10
+   * @param interval The sampling interval in ms > 10
    */
 
-  setSamplingInterval(interval) {
+  setSamplingInterval(interval: number) {
     const safeint = interval < 10 ? 10 : (interval > 65535 ? 65535 : interval);
     this.settings.samplingInterval = safeint;
     writeToTransport(this, [
@@ -1563,7 +1740,7 @@ class Firmata extends EventTarget {
   /**
    * Get sampling interval in millis. Default is 19 ms
    *
-   * @return {number} samplingInterval
+   * @return samplingInterval
    */
 
   getSamplingInterval() {
@@ -1572,15 +1749,14 @@ class Firmata extends EventTarget {
 
   /**
    * Set reporting on pin
-   * @param {number} pin The pin to turn on/off reporting
-   * @param {number} value Binary value to turn reporting on/off
+   * @param pin The pin to turn on/off reporting
+   * @param value Binary value to turn reporting on/off
    */
 
-  reportAnalogPin(pin, value) {
+  reportAnalogPin(pin: number, value: 0 | 1) {
     /* istanbul ignore else */
     if (value === 0 || value === 1) {
-      this.pins[pin].report = value;
-      //this.pins[this.analogPins[pin]].report = value;
+      this.pins[this.analogPins[pin]].report = value;
       writeToTransport(this, [
         REPORT_ANALOG | pin,
         value
@@ -1590,11 +1766,11 @@ class Firmata extends EventTarget {
 
   /**
    * Set reporting on pin
-   * @param {number} pin The pin to turn on/off reporting
-   * @param {number} value Binary value to turn reporting on/off
+   * @param pin The pin to turn on/off reporting
+   * @param value Binary value to turn reporting on/off
    */
 
-  reportDigitalPin(pin, value) {
+  reportDigitalPin(pin: number, value: number) {
     const port = pin >> 3;
     /* istanbul ignore else */
     if (value === 0 || value === 1) {
@@ -1611,8 +1787,7 @@ class Firmata extends EventTarget {
    *
    */
 
-  pingRead(options, callback) {
-
+  pingRead(options: { pin: number, value: number, pulseOut?: number, timeout?: number }, callback: (duration: number) => void) {
     if (!this.pins[options.pin].supportedModes.includes(PING_READ)) {
       throw new Error("Please upload PingFirmata to the board");
     }
@@ -1644,7 +1819,7 @@ class Firmata extends EventTarget {
       END_SYSEX,
     ]);
 
-    this.addEventListener(`ping-read-${pin}`, callback, {once: true});
+    this.once(`ping-read-${pin}`, callback);
   }
 
   /**
@@ -1654,21 +1829,33 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the arduino to configure a stepper motor with the given config to allow asynchronous control of the stepper
-   * @param {object} opts Options:
-   *    {number} deviceNum: Device number for the stepper (range 0-9)
-   *    {number} type: One of this.STEPPER.TYPE.*
-   *    {number} stepSize: One of this.STEPPER.STEP_SIZE.*
-   *    {number} stepPin: Only used if STEPPER.TYPE.DRIVER
-   *    {number} directionPin: Only used if STEPPER.TYPE.DRIVER
-   *    {number} motorPin1: motor pin 1
-   *    {number} motorPin2:  motor pin 2
-   *    {number} [motorPin3]: Only required if type == this.STEPPER.TYPE.THREE_WIRE || this.STEPPER.TYPE.FOUR_WIRE
-   *    {number} [motorPin4]: Only required if type == this.STEPPER.TYPE.FOUR_WIRE
-   *    {number} [enablePin]: Enable pin
+   * @param options :
+   *    deviceNum: Device number for the stepper (range 0-9)
+   *    type: One of this.STEPPER.TYPE.*
+   *    stepSize: One of this.STEPPER.STEP_SIZE.*
+   *    stepPin: Only used if STEPPER.TYPE.DRIVER
+   *    directionPin: Only used if STEPPER.TYPE.DRIVER
+   *    motorPin1: motor pin 1
+   *    motorPin2:  motor pin 2
+   *    [motorPin3]: Only required if type == this.STEPPER.TYPE.THREE_WIRE || this.STEPPER.TYPE.FOUR_WIRE
+   *    [motorPin4]: Only required if type == this.STEPPER.TYPE.FOUR_WIRE
+   *    [enablePin]: Enable pin
    *    {array} [invertPins]: Array of pins to invert
    */
 
-  accelStepperConfig(options) {
+  accelStepperConfig(options: {
+    deviceNum: number,
+    type: number
+    stepSize: number,
+    stepPin: number,
+    directionPin: number,
+    motorPin1: number,
+    motorPin2: number,
+    motorPin3?: number,
+    motorPin4?: number,
+    enablePin?: number,
+    invertPins?: number[],
+  }) {
 
     let {
       deviceNum,
@@ -1741,10 +1928,10 @@ class Firmata extends EventTarget {
   /**
    * Asks the arduino to set the stepper position to 0
    * Note: This is not a move. We are setting the current position equal to zero
-   * @param {number} deviceNum Device number for the stepper (range 0-9)
+   * @param deviceNum Device number for the stepper (range 0-9)
    */
 
-  accelStepperZero(deviceNum) {
+  accelStepperZero(deviceNum: number) {
     writeToTransport(this, [
       START_SYSEX,
       ACCELSTEPPER,
@@ -1758,10 +1945,10 @@ class Firmata extends EventTarget {
    * Asks the arduino to move a stepper a number of steps
    * (and optionally with and acceleration and deceleration)
    * speed is in units of steps/sec
-   * @param {number} deviceNum Device number for the stepper (range 0-5)
-   * @param {number} steps Number of steps to make
+   * @param deviceNum Device number for the stepper (range 0-5)
+   * @param steps Number of steps to make
    */
-  accelStepperStep(deviceNum, steps, callback) {
+  accelStepperStep(deviceNum: number, steps: number, callback) {
 
     writeToTransport(this, [
       START_SYSEX,
@@ -1773,14 +1960,14 @@ class Firmata extends EventTarget {
     ]);
 
     if (callback) {
-      this.addEventListener(`stepper-done-${deviceNum}`, callback, {once: true});
+      this.once(`stepper-done-${deviceNum}`, callback);
     }
   }
 
   /**
    * Asks the arduino to move a stepper to a specific location
-   * @param {number} deviceNum Device number for the stepper (range 0-5)
-   * @param {number} position Desired position
+   * @param deviceNum Device number for the stepper (range 0-5)
+   * @param position Desired position
    */
   accelStepperTo(deviceNum, position, callback) {
 
@@ -1794,14 +1981,14 @@ class Firmata extends EventTarget {
     ]);
 
     if (callback) {
-      this.addEventListener(`stepper-done-${deviceNum}`, callback, false);
+      this.once(`stepper-done-${deviceNum}`, callback);
     }
   }
 
   /**
    * Asks the arduino to enable/disable a stepper
-   * @param {number} deviceNum Device number for the stepper (range 0-9)
-   * @param {boolean} [enabled]
+   * @param deviceNum Device number for the stepper (range 0-9)
+   * @param [enabled]
    */
 
   accelStepperEnable(deviceNum, enabled = true) {
@@ -1817,7 +2004,7 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the arduino to stop a stepper
-   * @param {number} deviceNum Device number for the stepper (range 0-9)
+   * @param deviceNum Device number for the stepper (range 0-9)
    */
 
   accelStepperStop(deviceNum) {
@@ -1832,7 +2019,7 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the arduino to report the position of a stepper
-   * @param {number} deviceNum Device number for the stepper (range 0-9)
+   * @param deviceNum Device number for the stepper (range 0-9)
    */
 
   accelStepperReportPosition(deviceNum, callback) {
@@ -1852,8 +2039,8 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the arduino to set the acceleration for a stepper
-   * @param {number} deviceNum Device number for the stepper (range 0-9)
-   * @param {number} acceleration Desired acceleration in steps per sec^2
+   * @param deviceNum Device number for the stepper (range 0-9)
+   * @param acceleration Desired acceleration in steps per sec^2
    */
 
   accelStepperAcceleration(deviceNum, acceleration) {
@@ -1869,9 +2056,9 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the arduino to set the max speed for a stepper
-   * @param {number} deviceNum Device number for the stepper (range 0-9)
-   * @param {number} speed Desired speed or maxSpeed in steps per second
-   * @param {function} [callback]
+   * @param deviceNum Device number for the stepper (range 0-9)
+   * @param speed Desired speed or maxSpeed in steps per second
+   * @param [callback]
    */
 
   accelStepperSpeed(deviceNum, speed) {
@@ -1887,9 +2074,9 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the arduino to configure a multiStepper group
-   * @param {object} options Options:
-   *    {number} groupNum: Group number for the multiSteppers (range 0-5)
-   *    {number} devices: array of accelStepper device numbers in group
+   * @param options Options:
+   *    groupNum: Group number for the multiSteppers (range 0-5)
+   *    devices: array of accelStepper device numbers in group
    **/
 
   multiStepperConfig(options) {
@@ -1905,11 +2092,11 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the arduino to move a multiStepper group
-   * @param {number} groupNum Group number for the multiSteppers (range 0-5)
-   * @param {number} positions array of absolute stepper positions
+   * @param groupNum Group number for the multiSteppers (range 0-5)
+   * @param positions array of absolute stepper positions
    **/
 
-  multiStepperTo(groupNum, positions, callback) {
+  multiStepperTo(groupNum: number, positions: number[], callback: (done: boolean) => void) {
     if (groupNum < 0 || groupNum > 5) {
       throw new RangeError(`Invalid "groupNum": ${groupNum}. Expected "groupNum" between 0-5`);
     }
@@ -1931,10 +2118,10 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the arduino to stop a multiStepper group
-   * @param {number} groupNum: Group number for the multiSteppers (range 0-5)
+   * @param groupNum: Group number for the multiSteppers (range 0-5)
    **/
 
-  multiStepperStop(groupNum) {
+  multiStepperStop(groupNum: number) {
     /* istanbul ignore else */
     if (groupNum < 0 || groupNum > 5) {
       throw new RangeError(`Invalid "groupNum": ${groupNum}. Expected "groupNum" between 0-5`);
@@ -1955,16 +2142,16 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the arduino to configure a stepper motor with the given config to allow asynchronous control of the stepper
-   * @param {number} deviceNum Device number for the stepper (range 0-5, expects steppers to be setup in order from 0 to 5)
-   * @param {number} type One of this.STEPPER.TYPE.*
-   * @param {number} stepsPerRev Number of steps motor takes to make one revolution
-   * @param {number} stepOrMotor1Pin If using EasyDriver type stepper driver, this is direction pin, otherwise it is motor 1 pin
-   * @param {number} dirOrMotor2Pin If using EasyDriver type stepper driver, this is step pin, otherwise it is motor 2 pin
-   * @param {number} [motorPin3] Only required if type == this.STEPPER.TYPE.FOUR_WIRE
-   * @param {number} [motorPin4] Only required if type == this.STEPPER.TYPE.FOUR_WIRE
+   * @param deviceNum Device number for the stepper (range 0-5, expects steppers to be setup in order from 0 to 5)
+   * @param type One of this.STEPPER.TYPE.*
+   * @param stepsPerRev Number of steps motor takes to make one revolution
+   * @param dirOrMotor1Pin If using EasyDriver type stepper driver, this is direction pin, otherwise it is motor 1 pin
+   * @param dirOrMotor2Pin If using EasyDriver type stepper driver, this is step pin, otherwise it is motor 2 pin
+   * @param [motorPin3] Only required if type == this.STEPPER.TYPE.FOUR_WIRE
+   * @param [motorPin4] Only required if type == this.STEPPER.TYPE.FOUR_WIRE
    */
 
-  stepperConfig(deviceNum, type, stepsPerRev, dirOrMotor1Pin, dirOrMotor2Pin, motorPin3, motorPin4) {
+  stepperConfig(deviceNum: number, type: number, stepsPerRev, dirOrMotor1Pin, dirOrMotor2Pin, motorPin3, motorPin4) {
     writeToTransport(this, [
       START_SYSEX,
       STEPPER,
@@ -1986,13 +2173,13 @@ class Firmata extends EventTarget {
    * speed is in units of .01 rad/sec
    * accel and decel are in units of .01 rad/sec^2
    * TODO: verify the units of speed, accel, and decel
-   * @param {number} deviceNum Device number for the stepper (range 0-5)
-   * @param {number} direction One of this.STEPPER.DIRECTION.*
-   * @param {number} steps Number of steps to make
-   * @param {number} speed
+   * @param deviceNum Device number for the stepper (range 0-5)
+   * @param direction One of this.STEPPER.DIRECTION.*
+   * @param steps Number of steps to make
+   * @param speed
    * @param {number|function} accel Acceleration or if accel and decel are not used, then it can be the callback
-   * @param {number} [decel]
-   * @param {function} [callback]
+   * @param [decel]
+   * @param [callback]
    */
 
   stepperStep(deviceNum, direction, steps, speed, accel, decel, callback) {
@@ -2025,12 +2212,12 @@ class Firmata extends EventTarget {
 
   /**
    * Asks the Arduino to configure a hardware or serial port.
-   * @param {object} options Options:
-   *   portId {number} The serial port to use (HW_SERIAL1, HW_SERIAL2, HW_SERIAL3, SW_SERIAL0,
+   * @param options Options:
+   *   portId The serial port to use (HW_SERIAL1, HW_SERIAL2, HW_SERIAL3, SW_SERIAL0,
    *   SW_SERIAL1, SW_SERIAL2, SW_SERIAL3)
-   *   baud {number} The baud rate of the serial port
-   *   rxPin {number} [SW Serial only] The RX pin of the SoftwareSerial instance
-   *   txPin {number} [SW Serial only] The TX pin of the SoftwareSerial instance
+   *   baud The baud rate of the serial port
+   *   rxPin [SW Serial only] The RX pin of the SoftwareSerial instance
+   *   txPin [SW Serial only] The TX pin of the SoftwareSerial instance
    */
 
   serialConfig(options) {
@@ -2078,7 +2265,7 @@ class Firmata extends EventTarget {
 
   /**
    * Write an array of bytes to the specified serial port.
-   * @param {number} portId The serial port to write to.
+   * @param portId The serial port to write to.
    * @param {Array} inBytes An array of bytes to write to the serial port.
    */
 
@@ -2104,11 +2291,11 @@ class Firmata extends EventTarget {
   /**
    * Start continuous reading of the specified serial port. The port is checked for data each
    * iteration of the main Arduino loop.
-   * @param {number} portId The serial port to start reading continuously.
-   * @param {number} maxBytesToRead [Optional] The maximum number of bytes to read per iteration.
+   * @param portId The serial port to start reading continuously.
+   * @param maxBytesToRead [Optional] The maximum number of bytes to read per iteration.
    * If there are less bytes in the buffer, the lesser number of bytes will be returned. A value of 0
    * indicates that all available bytes in the buffer should be read.
-   * @param {function} callback A function to call when we have received the bytes.
+   * @param callback A function to call when we have received the bytes.
    */
 
   serialRead(portId, maxBytesToRead, callback) {
@@ -2137,7 +2324,7 @@ class Firmata extends EventTarget {
   /**
    * Stop continuous reading of the specified serial port. This does not close the port, it stops
    * reading it but keeps the port open.
-   * @param {number} portId The serial port to stop reading.
+   * @param portId The serial port to stop reading.
    */
 
   serialStop(portId) {
@@ -2154,7 +2341,7 @@ class Firmata extends EventTarget {
 
   /**
    * Close the specified serial port.
-   * @param {number} portId The serial port to close.
+   * @param portId The serial port to close.
    */
 
   serialClose(portId) {
@@ -2170,7 +2357,7 @@ class Firmata extends EventTarget {
    * Flush the specified serial port. For hardware serial, this waits for the transmission of
    * outgoing serial data to complete. For software serial, this removed any buffered incoming serial
    * data.
-   * @param {number} portId The serial port to flush.
+   * @param portId The serial port to flush.
    */
 
   serialFlush(portId) {
@@ -2186,7 +2373,7 @@ class Firmata extends EventTarget {
    * For SoftwareSerial only. Only a single SoftwareSerial instance can read data at a time.
    * Call this method to set this port to be the reading port in the case there are multiple
    * SoftwareSerial instances.
-   * @param {number} portId The serial port to listen on.
+   * @param portId The serial port to listen on.
    */
 
   serialListen(portId) {
@@ -2205,7 +2392,7 @@ class Firmata extends EventTarget {
   /**
    * Allow user code to handle arbitrary sysex responses
    *
-   * @param {number} commandByte The commandByte must be associated with some message
+   * @param commandByte The commandByte must be associated with some message
    *                             that's expected from the slave device. The handler is
    *                             called with an array of _raw_ data from the slave. Data
    *                             decoding must be done within the handler itself.
@@ -2213,16 +2400,16 @@ class Firmata extends EventTarget {
    *                             Use Firmata.decode(data) to extract useful values from
    *                             the incoming response data.
    *
-   *  @param {function} handler Function which handles receipt of responses matching
+   *  @param handler Function which handles receipt of responses matching
    *                            commandByte.
    */
 
-  sysexResponse(commandByte, handler) {
+  sysexResponse(commandByte: number, handler: (board: Firmata) => void) {
     if (Firmata.SYSEX_RESPONSE[commandByte]) {
       throw new Error(`${commandByte} is not an available SYSEX_RESPONSE byte`);
     }
 
-    Firmata.SYSEX_RESPONSE[commandByte] = board => handler.call(board, board.buffer.slice(2, -1));
+    Firmata.SYSEX_RESPONSE[commandByte] = (board: Firmata) => handler.call(board, board.buffer.slice(2, -1));
 
     return this;
   }
@@ -2230,11 +2417,11 @@ class Firmata extends EventTarget {
   /*
    * Allow user to remove sysex response handlers.
    *
-   * @param {number} commandByte The commandByte to disassociate with a handler
+   * @param commandByte The commandByte to disassociate with a handler
    *                             previously set via `sysexResponse( commandByte, handler)`.
    */
 
-  clearSysexResponse(commandByte) {
+  clearSysexResponse(commandByte: number) {
     /* istanbul ignore else */
     if (Firmata.SYSEX_RESPONSE[commandByte]) {
       delete Firmata.SYSEX_RESPONSE[commandByte];
@@ -2244,7 +2431,7 @@ class Firmata extends EventTarget {
   /**
    * Allow user code to send arbitrary sysex messages
    *
-   * @param {Array} message The message array is expected to be all necessary bytes
+   * @param message The message array is expected to be all necessary bytes
    *                        between START_SYSEX and END_SYSEX (non-inclusive). It will
    *                        be assumed that the data in the message array is
    *                        already encoded as 2 7-bit bytes LSB first.
@@ -2252,7 +2439,7 @@ class Firmata extends EventTarget {
    *
    */
 
-  sysexCommand(message) {
+  sysexCommand(message: number[]) {
 
     if (!message || !message.length) {
       throw new Error("Sysex Command cannot be empty");
@@ -2275,22 +2462,9 @@ class Firmata extends EventTarget {
   }
 
   /**
-   * Firmata.isAcceptablePort Determines if a `port` object (from SerialPort.list())
-   * is a valid Arduino (or similar) device.
-   * @return {Boolean} true if port can be connected to by Firmata
+   * Firmata.requestPort(callback) Request an acceptable port to connect to.
+   * callback(error, port)
    */
-
-  static isAcceptablePort(port) {
-    let rport = /usb|acm|^com/i;
-
-    if (rport.test(port.path)) {
-      return true;
-    }
-
-    return false;
-  }
-
-
   // Expose encode/decode for custom sysex messages
   static encode(data) {
     const encoded = [];
@@ -2322,13 +2496,16 @@ class Firmata extends EventTarget {
     return decoded;
   }
 
-  /** EventEmiiter -> EventTarget */
-  //emit(name: string, data: any) {
-  //  this.dispatchEvent(new CustomEvent('data', { detail: data }))
-  //}
+  analogWrite = this.pwmWrite
+  servoWrite = this.pwmWrite
 }
 
 
+
+// Static Compatibility Aliases
+Firmata.Board = Firmata;
+Firmata.SYSEX_RESPONSE = SYSEX_RESPONSE;
+Firmata.MIDI_RESPONSE = MIDI_RESPONSE;
 
 // The following are used internally.
 
@@ -2339,14 +2516,13 @@ class Firmata extends EventTarget {
  *                   a `pending` value, when the write operation has
  *                   completed, the `pending` value is decremented.
  *
- * @param  {Board} board An active Board instance
+ * @param  board An active Board instance
  * @param  {Array} data  An array of 8 and 7 bit values that will be
  *                       wrapped in a Buffer and written to the transport.
  */
- function writeToTransport(board: Firmata, data: number[]) {
-  ws.write(data)
-  //board.pending++;
-  //board.transport.write(Buffer.from(data), () => board.pending--);
+function writeToTransport(board: Firmata, data: number[]) {
+  board.pending++;
+  board.transport.write(Buffer.from(data), () => board.pending--);
 }
 
 function i2cRequest(board: Firmata, bytes: number[]) {
@@ -2416,7 +2592,7 @@ function decode32BitSignedInteger(bytes: number[]) {
 
 const MAX_SIGNIFICAND = Math.pow(2, 23);
 
-function encodeCustomFloat(input: number) {
+function encodeCustomFloat(input) {
   const sign = input < 0 ? 1 : 0;
 
   input = Math.abs(input);
@@ -2467,5 +2643,32 @@ function decodeCustomFloat(input: number) {
 }
 
 
-export const firmata = new Firmata()
-export default firmata
+/* istanbul ignore else */
+if (process.env.IS_TEST_MODE) {
+  let transport = null;
+  Firmata.test = {
+    i2cPeripheralSettings(board) {
+      return i2cActive.get(board);
+    },
+    get i2cActive() {
+      return i2cActive;
+    },
+    set transport(value) {
+      transport = Transport;
+      Transport = value;
+    },
+    restoreTransport() {
+      Transport = transport;
+    },
+    encode32BitSignedInteger,
+    decode32BitSignedInteger,
+    encodeCustomFloat,
+    decodeCustomFloat,
+    writeToTransport,
+
+    symbols: {
+      SYM_sendOneWireRequest,
+      SYM_sendOneWireSearch,
+    }
+  };
+}
