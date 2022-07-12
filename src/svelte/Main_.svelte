@@ -1,7 +1,7 @@
 <script lang="ts">
-  import {Firmata} from "./firmata/firmata"
-  import ws from "./WebSerial"
-  import { flash } from "./Flash"
+  import {Firmata} from "../lib/firmata/firmata"
+  import ws from "../lib/WebSerial"
+  import { flash } from "../lib/Flash"
   import { Styles } from "sveltestrap"
   import { onMount } from "svelte"
   
@@ -14,12 +14,13 @@
   //});
   let firmata: Firmata
   async function startButtonClicked() {
-    await ws.requestPort()
+    await ws.connect()
     firmata = new Firmata(ws)
+    console.log('?')
     firmata.on("ready", () => {
       console.log("ready")
     })
-    ws.emit('data', "test")
+    //ws.dis('data', "test")
   }
 
 </script>
@@ -41,7 +42,9 @@
       toggle led
     </button>
 
-    <button class='btn btn-secondary lg' on:click={() => {firmata.queryFirmware(()=>{})}} >
+    <button class='btn btn-secondary lg' on:click={() => {firmata.queryFirmware((firmware)=>{
+      console.log(firmware)
+    })}} >
       queryFirmware
     </button>
 

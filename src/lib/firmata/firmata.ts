@@ -6,8 +6,7 @@ const Encoder7Bit = require("./encoder7bit");
 const OneWire = require("./onewireutils");
 
 import {Buffer} from 'buffer'
-import EventEmitter from 'events';
-import type { WebSerialPort } from '../WebSerial';
+import type {WebSerialPort} from '../WebSerial';
 
 declare type Pin = {
   value?: number,
@@ -17,6 +16,7 @@ declare type Pin = {
   state?: number,
   analogChannel?: number,
 }
+
 
 // Program specifics
 const i2cActive = new Map();
@@ -197,7 +197,7 @@ const SYSEX_RESPONSE = {
       },
     },
 
-    board.emit("queryfirmware");
+    board.emit("queryfirmware", board.firmware);
   },
 
   /**
@@ -465,7 +465,7 @@ let Transport: WebSerialPort = null;
  * @property {SerialPort} sp The serial port object used to communicate with the arduino.
  */
 
-export class Firmata extends EventEmitter {
+export class Firmata extends Emitter {
   static SYSEX_RESPONSE = SYSEX_RESPONSE;
   static MIDI_RESPONSE = MIDI_RESPONSE;
   static Board = this
@@ -567,12 +567,23 @@ export class Firmata extends EventEmitter {
 
   HIGH = 1;
   LOW = 0;
-  pins: Pin[] = [];
+
+  defaultPin: Pin = {
+    value:0,
+    mode: this.MODES.INPUT,
+    supportedModes : [this.MODES.INPUT, this.MODES.OUTPUT],
+    report:0,
+    state:0,
+    analogChannel:0,
+  }
+
+  
+  pins: Pin[] = new Array(128).fill(this.defaultPin)
   ports = Array(16).fill(0);
   analogPins = [];
-  version: {
-    major: number;
-    minor: number;
+  version = {
+    major: 0,
+    minor: 0
   }
   firmware = {};
   versionReceived = false;
@@ -610,10 +621,10 @@ export class Firmata extends EventEmitter {
       throw new Error("Missing Transport");
     }
 
+    //this.transport.addEventListener("close", event => {
     this.transport.on("close", event => {
-
       // https://github.com/node-serialport/node-serialport/blob/5.0.0/UPGRADE_GUIDE.md#opening-and-closing
-      if (event && event.disconnect && event.disconnected) {
+      if (event) {
         this.emit("disconnect");
         return;
       }
@@ -621,13 +632,16 @@ export class Firmata extends EventEmitter {
       this.emit("close");
     });
 
+    //this.transport.addEventListener("open", event => {
     this.transport.on("open", event => {
       this.emit("open", event);
       // Legacy
       this.emit("connect", event);
     });
 
+    //this.transport.addEventListener("error", error => {
     this.transport.on("error", error => {
+
       if (!this.isReady && typeof callback === "function") {
         callback(error);
       } else {
@@ -635,7 +649,10 @@ export class Firmata extends EventEmitter {
       }
     });
 
+    //this.transport.addEventListener("data", event => {
+    
     this.transport.on("data", data => {
+      //let data = (event as CustomEvent).detail
       for (let i = 0; i < data.length; i++) {
         let byte = data[i];
         // we dont want to push 0 as the first byte on our buffer
@@ -816,7 +833,7 @@ export class Firmata extends EventEmitter {
    * @param callback A function to be called when the arduino has reported its firmware version.
    */
 
-  queryFirmware(callback?: () => void) {
+  queryFirmware(callback?: (firmware) => void) {
     this.once("queryfirmware", callback);
     writeToTransport(this, [
       START_SYSEX,
@@ -2522,7 +2539,7 @@ Firmata.MIDI_RESPONSE = MIDI_RESPONSE;
  */
 function writeToTransport(board: Firmata, data: number[]) {
   board.pending++;
-  board.transport.write(Buffer.from(data), () => board.pending--);
+  board.transport.write(data, () => board.pending--);
 }
 
 function i2cRequest(board: Firmata, bytes: number[]) {
