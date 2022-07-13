@@ -1,8 +1,8 @@
 
-function getHex() {
+function getHex(path: string) {
     return new Promise<ArrayBuffer>(async (resolve, reject) => {
         try {
-          const res = await fetch(`./static/hex/uno/StandardFirmata.cpp.hex`)
+          const res = await fetch(path)
           resolve(res.arrayBuffer())
         } catch(e) {
           reject(e)
@@ -10,10 +10,9 @@ function getHex() {
     })
 };
 
-export async function flash () {
-    const filecontents = await getHex()
-    const board = 'uno'
-
+export async function flash (board: string, path: string) {
+    const filecontents = await getHex(path)
+    console.log(filecontents)
     let avrgirl = new AvrgirlArduino({ board: board, debug: false })
     avrgirl.flash(filecontents, (error) =>  {
       if (error) {

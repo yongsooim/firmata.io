@@ -1,14 +1,21 @@
 <script>
-  import { flash } from "../lib/Flash"
+  import { flash } from '../../lib/Flash'
+  import BoardList from '../component/BoardList.svelte'
+  import { Button, Container, ButtonGroup } from 'sveltestrap'
+  import FlashButton from '../component/FlashButton.svelte'
+  import Connect from '../component/Connect.svelte'
+
 </script>
 
-<div class="position-sticky pt-3">
+<div class="position-sticky pt-3" id='wrapper'>
   <ul class="nav flex-column">
     <li class="nav-item">
-      <a class="nav-link active" aria-current="page"on:click={() => { alert("!") }} href={"#"}>
-        <span data-feather="home" />
-        Dashboard
-      </a>
+      <FlashButton />
+      <BoardList />
+    </li>
+
+    <li class="nav-item" >
+      <Connect />
     </li>
     <li class="nav-item">
       <a class="nav-link" href={"#"}>
@@ -67,11 +74,15 @@
         Social engagement
       </a>
     </li>
-    <li class="nav-item">
-      <a class="nav-link" href={"#"} on:click={() => { flash() }} >
-        <span data-feather="file-text" />
-        Flash
-      </a>
-    </li>
+
+
+
   </ul>
 </div>
+
+<style>
+  #wrapper {
+    width:300px;
+    margin: 20px;
+  }
+</style>

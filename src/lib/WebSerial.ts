@@ -1,10 +1,10 @@
-const Emitter = require("events");
+import Emitter from 'events'
 
 export class WebSerialPort extends Emitter {
   
-  port: SerialPort | undefined;
-  reader: ReadableStreamDefaultReader | undefined;
-  writer: WritableStreamDefaultWriter | undefined;
+  port: SerialPort | undefined
+  reader: ReadableStreamDefaultReader | undefined
+  writer: WritableStreamDefaultWriter | undefined
   async connect () {
     try {
       navigator.serial.requestPort().then(async (serialport) => {

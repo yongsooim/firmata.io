@@ -1,27 +1,28 @@
 <script lang="ts">
-  import { Styles } from "sveltestrap"
-  import Sidebar from "./svelte/Sidebar.svelte";
-  import Footer from "./svelte/Footer.svelte";
-  import Main from "./svelte/Main.svelte";
+  import Sidebar from "./svelte/layout/Sidebar.svelte";
+  import Footer from "./svelte/layout/Footer.svelte";
+  import Main from "./svelte/layout/Main.svelte";
+  import { Container, Col, Row, Nav, Styles } from 'sveltestrap'
 
 </script>
 <Styles />
 
-  <div class="container-fluid">
-    <div class="row">
-      <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+<Container class="container-fluid">
+  <Row class="row">
+    <Col>
+      <Nav id="sidebarMenu" class="d-md-block bg-light sidebar" >
         <Sidebar />
-      </nav>
-      <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-        <Main />
-      </main>
-    </div>
+      </Nav>
+    </Col>
+    <Col class="col-md-8 ms-sm-auto col-lg-8 px-md-4 ">
+      <Main />
+    </Col>
+  </Row>
 
-    <div class = "row">
-      <footer class="py-4 bg-light mt-auto">
-        <Footer />
-      </footer>
-    </div>
-  
-  </div>
-  
+  <Row class = "row border">
+    <footer class="py-4 bg-light mt-auto fixed-bottom ">
+      <Footer />
+    </footer>
+  </Row>
+
+</Container>
