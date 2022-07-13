@@ -7,6 +7,16 @@
 
 </script>
 
-<Button on:click={ () => { flash(get(board), get(path)) }} size='lg' class = 'w-100'>
-  ⚡ Upload
-</Button>
+<a on:click={ () => { flash(get(board), get(path)) }} href={'#'}>
+    ⚡ Upload
+</a>
+
+<style>
+  a {
+      text-align: center;
+    }
+  a:hover {
+    background-color: #f5f5f5;
+  }
+
+</style>

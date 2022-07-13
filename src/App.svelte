@@ -7,22 +7,60 @@
 </script>
 <Styles />
 
-<Container class="container-fluid">
-  <Row class="row">
-    <Col>
-      <Nav id="sidebarMenu" class="d-md-block bg-light sidebar" >
-        <Sidebar />
-      </Nav>
-    </Col>
-    <Col class="col-md-8 ms-sm-auto col-lg-8 px-md-4 ">
-      <Main />
-    </Col>
-  </Row>
+<div id='sidebar-container'>
+  <sidebar>
+    <Sidebar />
+  </sidebar>
+</div>
 
-  <Row class = "row border">
-    <footer class="py-4 bg-light mt-auto fixed-bottom ">
-      <Footer />
-    </footer>
-  </Row>
+<main class="col-md-8 ms-sm-auto col-lg-8 px-md-4 ">
+  <Main />
+</main>
 
-</Container>
+<footer>
+  <Footer />
+</footer>
+
+<style>
+  :root {
+    --sidebar-width: 250px;
+    --footer-height: 40px;
+  }
+
+  #sidebar-container {
+    height: calc(100vh - var(--footer-height));
+    width: var(--sidebar-width);
+    padding: 10px;
+    margin: 0px;
+    position:relative;
+    background-color: lightgrey;
+  }
+
+  sidebar {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    margin: 0px;
+    padding: 10px;
+    left: 0;
+
+    overflow-x: hidden;
+    overflow-y: hidden;
+  }
+
+  main {
+    height: calc(100vh - var(--footer-height)); 
+    width: calc(100vw - var(--sidebar-width));
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width);
+  }
+
+  footer {
+    height: var(--footer-height);
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+  }
+
+</style>

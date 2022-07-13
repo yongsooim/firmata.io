@@ -1,12 +1,7 @@
 <script lang='ts'>
   import webSerialPort from '../../lib/WebSerial';
   import { Dropdown, DropdownItem, DropdownMenu, DropdownToggle } from 'sveltestrap';
-  //import { Firmata } from '../../lib/firmata/firmata';
-
-  let firmata
-  import('../../lib/firmata/firmata').then(module => {
-    firmata = module;
-  })
+  import { Firmata } from '../../lib/firmata/firmata';
 
   const baudrateList = [9600, 19200, 38400, 57600, 115200];
     let selectedBaudrate = baudrateList[0];
@@ -17,17 +12,17 @@
 
     async function connect() {
       await webSerialPort.connect()
-      import('../../lib/firmata/firmata').then(module => {
-        new firmata.Firmata(webSerialPort)
-      })
+      new Firmata(webSerialPort)
     }
 </script>
 
-<a class="nav-link" on:click={connect} href={"#"}>
+<a id = 'connectButton' class="nav-link" on:click={connect} href={"#"}>
   Connect
 </a>
 
+
 <div class="mb-3" >
+  <p>Baudrate</p>
   <Dropdown group size="lg"  >
     <DropdownToggle caret class = 'w-100' >{selectedBaudrate}</DropdownToggle>
     <DropdownMenu class= 'scrollable-menu'>
@@ -39,3 +34,18 @@
     </DropdownMenu>
   </Dropdown>
 </div>
+
+<style>
+  a:hover {
+    background-color: #f5f5f5;
+  }
+
+  a {
+    width:100%;
+  }
+
+  p {
+    margin: 0;
+    padding: 0;
+  }
+</style>
