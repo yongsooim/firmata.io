@@ -5,10 +5,11 @@
 
 </script>
 
+<div>
 <button on:click={ () => { flash(get(board$), get(path$)) }} >
     ⚡ Upload
 </button>
-
+</div>
 <style>
   div {
     width: 100%;

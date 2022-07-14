@@ -1,6 +1,6 @@
 <script lang='ts'>
   import webSerialPort from '../../lib/WebSerial';
-  //import { Firmata } from '../../lib/firmata/firmata';
+  import { Firmata } from '../../lib/firmata/firmata';
 
   const baudrateList = [9600, 19200, 38400, 57600, 115200];
     let selectedBaudrate = baudrateList[0];
@@ -11,7 +11,9 @@
 
     async function connect() {
       await webSerialPort.connect()
-      new Firmata(webSerialPort)
+      let firmata = new Firmata(webSerialPort)
+      console.log(firmata)
+
     }
 </script>
 
@@ -33,7 +35,7 @@
   }
 
   a {
-    width:100%;
+    width:var(--sidebar-width);
   }
 
   p {
@@ -44,8 +46,8 @@
   select {
     font-size: 23px;
     height: 30px;
-    max-width: 100%;
-    min-width: 100%;
+    max-width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
   }
 
 </style>

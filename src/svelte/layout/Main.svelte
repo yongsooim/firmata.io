@@ -1,11 +1,18 @@
 <h1>firmata.io</h1>
 
-<p>Fast prototyping on the browser.</p>
+<p>Fast prototyping on the browser.
 
-<!--
-<img src='./static/image/arduinoUno.svg' alt='arduino uno'>
--->
+
+</p>
+
+<p>
+    <img src='./static/image/arduinoUno.svg' alt='arduino uno'>
+
+</p>
 
 <style>
+    h1, p {
+        text-align: center;
 
+    }
 </style>

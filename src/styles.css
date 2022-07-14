@@ -5,11 +5,26 @@ body {
 
 :root {
   --sidebar-width: 250px;
-  --footer-height: 40px;
+  --footer-height: 20px;
   --sidebar-item-height: 40px;
+  --height: 50px;
 }
 
 #sidebar {
+  height: 100vh;
+  width: calc(var(--sidebar-width) * 3);
+  position: fixed;
+  margin-right: calc(100vw - var(--sidebar-width));
+  left: 0;
+  top:0;
+  bottom: 0;
+  z-index: 1;
+
+  overflow-x: hidden;
+  overflow-y: hidden;
+}
+
+#sidebar-internal {
   height: 100%;
   width: var(--sidebar-width);
   position: fixed;
@@ -17,12 +32,13 @@ body {
   left: 0;
   top:0;
   bottom: 0;
-  z-index: 1;
+  z-index:-1;
   background-color: lightgrey;
 
   overflow-x: hidden;
   overflow-y: hidden;
 }
+
 
 main {
   height: calc(100vh - var(--footer-height)); 
@@ -30,16 +46,18 @@ main {
   position: fixed;
   top: 0;
   left: var(--sidebar-width);
+  margin: 20px;
   z-index: 0;
 }
 
 footer {
+  font-size: 14px;
   text-align: center;
-  height: 40px;
+  height: var(--footer-height);
   width: calc(100vw - 250px);
   position: fixed;
   bottom: 0;
-  margin: 0;
+  margin-bottom: 10px;
   left: 250px;
 }
 
@@ -49,3 +67,23 @@ footer p {
   padding: 0;
 }
 
+/* width */
+::-webkit-scrollbar {
+  width:5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+  z-index: -2;
+}

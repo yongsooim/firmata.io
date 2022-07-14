@@ -1,6 +1,7 @@
 <script lang='ts'>
   import { board$, path$ } from "../stores";
   import { get } from "svelte/store";
+  import Select from './select/index.js'
 
   const firmwareList = new Map<string, string[]>([
     ["uno", ["StandardFirmata.cpp", "Blink.cpp"]],
@@ -31,7 +32,11 @@
 
   function updateBoard(board: string) {
     board$.set(board)
+    firmwaresInSelectedBoard = firmwareList.get(board)
     updateFirmware(firmwareList.get(board)[0])
+    firmwaresInSelectedBoard = ['asf', 'asda']
+    console.log('?')
+
   }
 
   function updateFirmware(firmware: string) { 
@@ -39,27 +44,27 @@
     console.log(get(path$))
   }
 
+
 </script>
 
-<div style='width=100%'>Board</div>
-<select on:change={(e) => {updateBoard(e.currentTarget.value)}}>
-  {#each boardList as board}
-    <option value={board}>{board}</option>
-  {/each}
-</select>
-
-<div style='width=100%'>Firmware</div>
-<select on:change={(e) => {updateFirmware(e.currentTarget.value)}}>
-  {#each firmwaresInSelectedBoard as file}
-    <option>{file}</option>
-  {/each}
-</select>
+<div class = 'select-title'>Board</div>
+<div class = 'select-wrapper'>
+  <Select id='boardselect' items={boardList}  value='uno' ></Select>
+</div>
 
 <style>
-  select {
-    font-size: 23px;
-    height: 30px;
-    max-width: 100%;
-    min-width: 100%;
+
+  .select-title {
+    width: var(--sidebar-width);
+    margin-right:0px;
+    margin-left:16px;
+    padding-top : 10px;
+    padding-bottom : 0px;
+  }
+  .select-wrapper {
+    text-align: center;
+    width: var(--sidebar-width);
+    padding-top: 5px;
+    padding-bottom: 5px;
   }
 </style>
