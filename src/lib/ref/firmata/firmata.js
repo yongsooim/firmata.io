@@ -1,11 +1,11 @@
 "use strict";
 
 // Built-in Dependencies
-const Emitter = require("events");
+import Emitter from "events";
 
 // Internal Dependencies
-const Encoder7Bit = require("./encoder7bit");
-const OneWire = require("./onewireutils");
+import { from7BitArray, to7BitArray } from "./encoder7bit";
+import { readDevices } from "./onewireutils";
 
 // Program specifics
 const i2cActive = new Map();
@@ -326,19 +326,19 @@ const SYSEX_RESPONSE = {
     const pin = board.buffer[3];
     const buffer = board.buffer.slice(4, board.buffer.length - 1);
 
-    board.emit(`1-wire-search-reply-${pin}`, OneWire.readDevices(buffer));
+    board.emit(`1-wire-search-reply-${pin}`, readDevices(buffer));
   },
 
   [ONEWIRE_SEARCH_ALARMS_REPLY](board) {
     const pin = board.buffer[3];
     const buffer = board.buffer.slice(4, board.buffer.length - 1);
 
-    board.emit(`1-wire-search-alarms-reply-${pin}`, OneWire.readDevices(buffer));
+    board.emit(`1-wire-search-alarms-reply-${pin}`, readDevices(buffer));
   },
 
   [ONEWIRE_READ_REPLY](board) {
     const encoded = board.buffer.slice(4, board.buffer.length - 1);
-    const decoded = Encoder7Bit.from7BitArray(encoded);
+    const decoded = from7BitArray(encoded);
     const correlationId = (decoded[1] << 8) | decoded[0];
 
     board.emit(`1-wire-read-reply-${correlationId}`, decoded.slice(2));
@@ -1697,7 +1697,7 @@ class Firmata extends Emitter {
       ONEWIRE_DATA,
       subcommand,
       pin,
-      ...Encoder7Bit.to7BitArray(bytes),
+      ...to7BitArray(bytes),
       END_SYSEX,
     ];
 
@@ -2691,4 +2691,4 @@ const bindTransport = function(transport) {
 
 bindTransport.Firmata = Firmata;
 
-module.exports = bindTransport;
+export default bindTransport;

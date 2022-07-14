@@ -12,12 +12,6 @@ export default defineConfig({
   plugins: [
     svelte(),
     viteCommonjs(),
-    chunkSplitPlugin({
-      strategy: 'single-vendor',
-      customSplitting: {
-        'firmata': ['./src/lib/firmata.ts', './src/lib/encoder7bit.ts', './src/lib/onewireutils.ts', ],
-      }
-    }),
     viteStaticCopy({
       targets: [
         {

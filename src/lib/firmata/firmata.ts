@@ -1,9 +1,9 @@
 // Built-in Dependencies
-const Emitter = require("events");
+import Emitter from "events";
 
 // Internal Dependencies
-const Encoder7Bit = require("./encoder7bit");
-const OneWire = require("./onewireutils");
+import * as Encoder7Bit from "./encoder7bit";
+import * as OneWire from "./onewireutils";
 
 import {Buffer} from 'buffer'
 import type { WebSerialPort } from '../WebSerial';
