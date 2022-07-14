@@ -1,20 +1,24 @@
 <script lang='ts'>
   import { flash } from '../../lib/Flash';
-  import { Button } from 'sveltestrap';
-  //import { selectedBoard, selectedFirmwarePath } from './BoardList.svelte';
-  import { path, board } from '../stores';
+  import { path$, board$ } from '../stores';
   import { get } from 'svelte/store';
 
 </script>
 
-<a on:click={ () => { flash(get(board), get(path)) }} href={'#'}>
+<button on:click={ () => { flash(get(board$), get(path$)) }} >
     ⚡ Upload
-</a>
+</button>
 
 <style>
+  div {
+    width: 100%;
+  }
+
   a {
-      text-align: center;
-    }
+    width: 100%;
+    text-align: center;
+  }
+  
   a:hover {
     background-color: #f5f5f5;
   }

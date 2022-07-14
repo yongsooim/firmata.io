@@ -2,8 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico" />
     <link rel="stylesheet" href="./src/styles.css" />
+    <link rel="icon" href="/favicon.ico" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -16,16 +16,28 @@
       gtag('config', 'G-J0CGPJ8653');
     </script>
     -->
-    <script defer src = "./static/js/avrgirl-arduino.global.min.js"></script>
-    <style>
-      #app{
-        height: 100%;
-      }
-    </style>
+  
     <title>firmata.io</title>
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
+
+    <sidebar id='sidebar'>
+    </sidebar>
+
+    <main id='main'>
+    </main>
+
+    <footer id='footer'>
+      <p>
+        This page is built with <a href='https://svelte.dev/' target='_blank'>Svelte</a> and <a href='https://vitejs.dev/' target='_blank'>Vite</a>, hosted on <a href='https://pages.github.com/' target='_blank'>Github pages</a>.
+        Github Repo 
+        <a href="https://github.com/yongsooim/firmata.io/" target='_blank'><img src='./src/static/image/gh.png' alt='github logo' width='25px' height='25px'></a>
+      </p>
+    </footer>
+
+    <script defer type="module" src="/src/index.ts"></script>
+    <script defer src = "./static/js/avrgirl-arduino.global.min.js"></script>
+    <script defer src = "./static/js/firmata.min.js"></script>
+
   </body>
 </html>
