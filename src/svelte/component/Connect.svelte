@@ -17,11 +17,13 @@
     }
 </script>
 
+<div class='wrapper'>
 <a id = 'connectButton' class="nav-link" on:click={connect} href={"#"}>
   Connect
 </a>
+</div>
 
-<div style='width=100%'>Baudrate</div>
+<div>Baudrate</div>
 <select on:change={(e) => {updatebaudrate(e.currentTarget.value)}}>
   {#each baudrateList as baudrate}
     <option>{baudrate}</option>
@@ -30,6 +32,10 @@
 
 
 <style>
+  .wrapper{
+    background-color: grey;
+    width: var(--sidebar-width);
+  }
   a:hover {
     background-color: #f5f5f5;
   }

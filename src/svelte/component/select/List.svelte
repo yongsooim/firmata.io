@@ -6,7 +6,6 @@
     const dispatch = createEventDispatcher();
 
     export let container = undefined;
-    export let VirtualList = null;
     export let Item = ItemComponent;
     export let isVirtualList = false;
     export let items = [];
@@ -18,7 +17,6 @@
                 : option[labelIdentifier];
     };
     export let getGroupHeaderLabel = null;
-    export let itemHeight = 40;
     export let hoverItemIndex = 0;
     export let value = undefined;
     export let optionIdentifier = 'value';
@@ -35,8 +33,6 @@
     let isScrollingTimer = 0;
     let isScrolling = false;
     let prev_items;
-
-    let list;
 
     onMount(() => {
         if (items.length > 0 && !isMulti && value) {
@@ -252,10 +248,6 @@
         left: calc(var(--sidebar-width) - 5px);
     }
 
-    .virtualList {
-        height: var(--virtualListHeight, 200px);
-    }
-
     .listGroupTitle {
         color: var(--groupTitleColor, #8f8f8f);
         cursor: default;
@@ -281,61 +273,32 @@
 
 <div
     class="listContainer"
-    class:virtualList={isVirtualList}
     bind:this={container}
     style={listStyle}>
-    {#if isVirtualList}
-        <svelte:component
-            this={VirtualList}
-            {items}
-            {itemHeight}
-            bind:this={list}
-            let:item
-            let:i>
+    {#each items as item, i}
+        {#if item.isGroupHeader && !item.isSelectable}
+            <div class="listGroupTitle">{getGroupHeaderLabel(item)}</div>
+        {:else}
             <div
                 on:mouseover={() => handleHover(i)}
                 on:focus={() => handleHover(i)}
                 on:click={(event) => handleClick({ item, i, event })}
-                class="listItem">
+                class="listItem"
+                tabindex="-1">
                 <svelte:component
                     this={Item}
                     {item}
-                    {filterText}
                     {getOptionLabel}
                     isFirst={isItemFirst(i)}
                     isActive={isItemActive(item, value, optionIdentifier)}
                     isHover={isItemHover(hoverItemIndex, item, i, items)}
-                    isSelectable={isItemSelectable(item)} />
+                    isSelectable={isItemSelectable(item)} 
+                    />
             </div>
-        </svelte:component>
+        {/if}
     {:else}
-        {#each items as item, i}
-            {#if item.isGroupHeader && !item.isSelectable}
-                <div class="listGroupTitle">{getGroupHeaderLabel(item)}</div>
-            {:else}
-                <div
-                    on:mouseover={() => handleHover(i)}
-                    on:focus={() => handleHover(i)}
-                    on:click={(event) => handleClick({ item, i, event })}
-                    class="listItem"
-                    tabindex="-1">
-                    <svelte:component
-                        this={Item}
-                        {item}
-                        {filterText}
-                        {getOptionLabel}
-                        isFirst={isItemFirst(i)}
-                        isActive={isItemActive(item, value, optionIdentifier)}
-                        isHover={isItemHover(hoverItemIndex, item, i, items)}
-                        isSelectable={isItemSelectable(item)} 
-                        list={list}
-                        />
-                </div>
-            {/if}
-        {:else}
-            {#if !hideEmptyState}
-                <div class="empty">{noOptionsMessage}</div>
-            {/if}
-        {/each}
-    {/if}
+        {#if !hideEmptyState}
+            <div class="empty">{noOptionsMessage}</div>
+        {/if}
+    {/each}
 </div>

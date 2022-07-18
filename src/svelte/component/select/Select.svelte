@@ -5,7 +5,6 @@
     import _Item from './Item.svelte';
     import _Selection from './Selection.svelte';
     import _MultiSelection from './MultiSelection.svelte';
-    import _VirtualList from './VirtualList.svelte';
     import _ClearIcon from './ClearIcon.svelte';
     import debounce from './utils/debounce';
 
@@ -71,13 +70,11 @@
     export let isWaiting = false;
     export let listPlacement = 'auto';
     export let listOpen = false;
-    export let isVirtualList = false;
     export let loadOptionsInterval = 300;
     export let noOptionsMessage = 'No options';
     export let hideEmptyState = false;
     export let inputAttributes = {};
     export let listAutoWidth = true;
-    export let itemHeight = 40;
     export let Icon = undefined;
     export let iconProps = {};
     export let showChevron = false;
@@ -91,7 +88,6 @@
     export let List = _List;
     export let Selection = _Selection;
     export let MultiSelection = _MultiSelection;
-    export let VirtualList = _VirtualList;
 
     function filterMethod(args) {
         if (args.loadOptions && args.filterText.length > 0) return;
@@ -572,13 +568,10 @@
         optionIdentifier,
         noOptionsMessage,
         hideEmptyState,
-        isVirtualList,
-        VirtualList,
         value,
         isMulti,
         getGroupHeaderLabel,
         items: filteredItems,
-        itemHeight,
         getOptionLabel,
         listPlacement,
         parent: container,
@@ -805,6 +798,7 @@
         right: 0;
         margin: auto;
         -webkit-transform: none;
+        transform: none;
     }
 
     .spinner_path {

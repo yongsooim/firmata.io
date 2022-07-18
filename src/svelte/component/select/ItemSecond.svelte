@@ -3,9 +3,7 @@
     export let isFirst = false;
     export let isHover = false;
     export let isSelectable = false;
-    export let getOptionLabel = undefined;
     export let item = undefined;
-    export let filterText = '';
 
     let itemClasses = '';
 
@@ -79,6 +77,6 @@
 </style>
 
 <div class="itemSecond {itemClasses}" 
-    >
-    {@html getOptionLabel(item, filterText)}
+    on:click={()=>{console.log(item)}}>
+    {item}
 </div>

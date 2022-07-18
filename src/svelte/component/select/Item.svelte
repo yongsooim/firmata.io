@@ -1,5 +1,6 @@
 <script>
-import ListSecond from "./ListSecond.svelte";
+    import { firmwareList } from "../../../consts";
+    import ListSecond from "./ListSecond.svelte";
 
     export let isActive = false;
     export let isFirst = false;
@@ -8,7 +9,6 @@ import ListSecond from "./ListSecond.svelte";
     export let getOptionLabel = undefined;
     export let item = undefined;
     export let filterText = '';
-    export let list = undefined;
 
     export let secondListOpen = false;
 
@@ -46,26 +46,21 @@ import ListSecond from "./ListSecond.svelte";
         secondListOpen = !secondListOpen;
         
         lastType = e.type
+        console.log(item)
+
     }
 
     
     function handleHoverSecondList(e) {
         isHoverSecondList = !isHoverSecondList;
+
     }
 
-    function handleLeaveSecondList(e) {
-        isHoverSecondList = !isHoverSecondList;
-        //secondListOpen = false;
-    }
-
-    
-    
-    
 </script>
 
 <style>
     .item {
-        cursor: default;
+        cursor: pointer;
         height: var(--height, 42px);
         line-height: var(--height, 42px);
         padding: var(--itemPadding, 0 20px);
@@ -114,12 +109,9 @@ import ListSecond from "./ListSecond.svelte";
     {@html getOptionLabel(item, filterText)}
     {#if secondListOpen}
     <svelte:component
-        on:mouseover={(e)=>{handleHoverSecondList(e)}}
-        on:mouseleave={(e)=>{handleHoverSecondList(e)}}
-        on:focus={(e)=>{handleHoverSecondList(e)}}
         parent={thisItem}
         this={ListSecond}
-        items={[0, 1, 2, 3, 4]}
+        items={firmwareList.get(item.value)}
     />
     {/if}
 

@@ -5,10 +5,26 @@ export class WebSerialPort extends Emitter {
   port: SerialPort | undefined
   reader: ReadableStreamDefaultReader | undefined
   writer: WritableStreamDefaultWriter | undefined
-  async connect () {
+  async connect (target? : 'usb' | 'serial'){
     try {
-      navigator.serial.requestPort().then(async (serialport) => {
-        this.port = serialport
+      if(target === undefined) {
+        let device = await navigator.usb.requestDevice({ filters: [] })
+        let ports = await navigator.serial.getPorts()
+        for(let i = 0 ; i < ports.length ; i++) {
+          const portInfo = ports[i].getInfo()
+          if(portInfo.usbProductId === device.productId && portInfo.usbVendorId === device.vendorId) {
+            this.port = ports[i]
+            break
+          }
+          if(i === ports.length - 1) {
+            console.log('no port found on selected usb')
+            this.connect('serial')
+          }
+        }  
+      } else {
+        this.port = await navigator.serial.requestPort()
+      }
+        
         await this.port.open({ baudRate: 57600 });
         this.reader = this.port.readable.getReader();
         this.writer = this.port.writable.getWriter();
@@ -30,10 +46,12 @@ export class WebSerialPort extends Emitter {
             this.reader.releaseLock();
           }
         }
-      });
-
     } catch(e) {
-      console.error(e)
+      if(e.message === 'No device selected.'){
+        console.log('retry')
+        this.connect('serial')
+      }
+
     }
   }
 
