@@ -89,6 +89,8 @@
     export let Selection = _Selection;
     export let MultiSelection = _MultiSelection;
 
+    export let selectType = 'board';
+
     function filterMethod(args) {
         if (args.loadOptions && args.filterText.length > 0) return;
         if (!args.items) return [];
@@ -674,7 +676,6 @@
 <style>
     .selectContainer {
         --internalPadding: 0 16px;
-        border: var(--border, 1px solid #d8dbdf);
 
         box-sizing: border-box;
         height: var(--height, 42px);
@@ -961,6 +962,7 @@
     {#if listOpen}
         <svelte:component
             this={List}
+            {selectType}
             {...listProps}
             bind:hoverItemIndex
             on:itemSelected={itemSelected}

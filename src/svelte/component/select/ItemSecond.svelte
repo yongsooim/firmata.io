@@ -55,7 +55,7 @@
     }
 
     .itemSecond:active {
-        background: var(--itemActiveBackground, #b9daff);
+        background: var(--itemActiveBackground, #51a6c0);
     }
 
     .itemSecond.active {
@@ -76,7 +76,6 @@
     }
 </style>
 
-<div class="itemSecond {itemClasses}" 
-    on:click={()=>{console.log(item)}}>
+<div class="itemSecond {itemClasses}" >
     {item}
 </div>

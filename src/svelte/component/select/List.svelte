@@ -29,6 +29,7 @@
     export let listPlacement = null;
     export let listAutoWidth = null;
     export let listOffset = 5;
+    export let selectType = 'board'; // 'board' or 'baudrate'
 
     let isScrollingTimer = 0;
     let isScrolling = false;
@@ -82,6 +83,7 @@
     function handleClick(args) {
         const { item, i, event } = args;
         event.stopPropagation();
+        
 
         if (
             value &&
@@ -288,6 +290,7 @@
                 <svelte:component
                     this={Item}
                     {item}
+                    {selectType}
                     {getOptionLabel}
                     isFirst={isItemFirst(i)}
                     isActive={isItemActive(item, value, optionIdentifier)}

@@ -1,4 +1,4 @@
-export const firmwareList = new Map<string, string[]>([
+export const firmwareList = [
   ["uno", ["StandardFirmata.cpp", "Blink.cpp"]],
   ["mega", ["StandardFirmata.cpp", "Blink.cpp"]],
   ["nano", ["StandardFirmata.cpp", "Blink.cpp"]],
@@ -18,6 +18,6 @@ export const firmwareList = new Map<string, string[]>([
   ["pinoccio", ["StandardFirmata.cpp", "Blink.cpp", "Bootstrap.cpp"]],
   ["qduino", ["StandardFirmata.cpp", "rainbow.cpp"]],
   ["sf-pro-micro", ["StandardFirmata-5v.cpp", "Blink-5v.cpp"]],
-])
+]
 
 export const baudrateList = [ 9600, 19200, 38400, 57600, 115200 ]

@@ -1,4 +1,6 @@
 import { writable } from "svelte/store";
 
-export const path$ = writable('./static/hex/uno/StandardFirmata.cpp.hex');
-export const board$ = writable('uno');
+export const selectedHex = writable('StandardFirmata.cpp');
+export const selectedBoard = writable('uno');
+
+export const selectedBaudrate = writable('57600');

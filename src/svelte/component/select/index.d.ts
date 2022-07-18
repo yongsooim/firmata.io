@@ -16,6 +16,7 @@ export interface SelectProps {
   placeholder?: string;
   placeholderAlwaysShow?: boolean;
   items?: any[];
+  selectType?: "board" | "baudrate";
   itemFilter?: (label: string, filterText: string, option: any) => boolean;
   groupBy?: (item: any) => any;
   groupFilter?: (groups: any) => any;

@@ -1,12 +1,12 @@
 <script lang='ts'>
   import { flash } from '../../lib/Flash';
-  import { path$, board$ } from '../stores';
+  import { selectedBoard, selectedHex } from '../stores';
   import { get } from 'svelte/store';
 
 </script>
 
 <div>
-<button on:click={ () => { flash(get(board$), get(path$)) }} >
+<button on:click={ () => { flash($selectedBoard, $selectedHex) } } >
     ⚡ Upload
 </button>
 </div>

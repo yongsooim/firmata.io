@@ -1,27 +1,31 @@
 <script lang='ts'>
-  import { board$, path$ } from "../stores";
-  import { firmwareList } from '.././../consts'
+  import { selectedBoard, selectedHex } from "../stores";
   import { get } from "svelte/store";
   import Select from './select/index.js'
 
-  const boardList = Array.from(firmwareList.keys())
+  export const firmwareList = [
+  ["uno", ["StandardFirmata.cpp", "Blink.cpp"]],
+  ["mega", ["StandardFirmata.cpp", "Blink.cpp"]],
+  ["nano", ["StandardFirmata.cpp", "Blink.cpp"]],
+  ["pro-mini", ["Blink-3v.cpp", "StandardFirmata-3v.cpp"]],
+  ["yun", ["StandardFirmata.cpp", "StandardFirmata.with_bootloader.cpp"]],
+  ["imuduino", ["StandardFirmata.cpp", "StandardFirmata.with_bootloader.cpp"]],
+  ["tinyduino", ["StandardFirmata.cpp", "Blink.cpp"]],
+  ["leonardo", ["StandardFirmata.cpp", "Blink.cpp"]],
+  ["circuit-playground-classic", ["StandardFirmata.cpp", "Blink.cpp"]],
+  ["arduboy", ["rund.cpp.leonardo"]],
+  ["bqZum", ["Blink.cpp"]],
+  ["duemilanove168", ["StandardFirmata.cpp", "Blink.cpp"]],
+  ["duemilanove328", ["StandardFirmata.cpp", "Blink.cpp"]],
+  ["esplora", ["StandardFirmata.cpp", "Blink.cpp"]],
+  ["feather", ["Blink.cpp"]],
+  ["lilypad-usb", ["StandardFirmata.cpp", "Blink.cpp"]],
+  ["pinoccio", ["StandardFirmata.cpp", "Blink.cpp", "Bootstrap.cpp"]],
+  ["qduino", ["StandardFirmata.cpp", "rainbow.cpp"]],
+  ["sf-pro-micro", ["StandardFirmata-5v.cpp", "Blink-5v.cpp"]],
+  ]
 
-  let selectedBoard = firmwareList.keys().next().value
-  let firmwaresInSelectedBoard = firmwareList.get(selectedBoard)
-
-  function updateBoard(board: string) {
-    board$.set(board)
-    firmwaresInSelectedBoard = firmwareList.get(board)
-    updateFirmware(firmwareList.get(board)[0])
-    firmwaresInSelectedBoard = ['asf', 'asda']
-    console.log('?')
-
-  }
-
-  function updateFirmware(firmware: string) { 
-    path$.set(`./static/hex/${selectedBoard}/${firmware}.hex`)
-    console.log(get(path$))
-  }
+  const boardList = firmwareList.map(v => v[0])
 
 
 </script>

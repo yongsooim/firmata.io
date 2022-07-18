@@ -3,7 +3,7 @@ import Emitter from "events";
 
 // Internal Dependencies
 import * as Encoder7Bit from "./encoder7bit";
-import * as OneWire from "./onewireutils";
+import { OneWireUtils } from "./onewireutils";
 
 import {Buffer} from 'buffer'
 import type { WebSerialPort } from '../WebSerial';
@@ -337,14 +337,14 @@ const SYSEX_RESPONSE = {
     const pin = board.buffer[3];
     const buffer = board.buffer.slice(4, board.buffer.length - 1);
 
-    board.emit(`1-wire-search-reply-${pin}`, OneWire.readDevices(buffer));
+    board.emit(`1-wire-search-reply-${pin}`, OneWireUtils.readDevices(buffer));
   },
 
   [ONEWIRE_SEARCH_ALARMS_REPLY](board: Firmata) {
     const pin = board.buffer[3];
     const buffer = board.buffer.slice(4, board.buffer.length - 1);
 
-    board.emit(`1-wire-search-alarms-reply-${pin}`, OneWire.readDevices(buffer));
+    board.emit(`1-wire-search-alarms-reply-${pin}`, OneWireUtils.readDevices(buffer));
   },
 
   [ONEWIRE_READ_REPLY](board: Firmata) {
@@ -1209,10 +1209,10 @@ export class Firmata extends Emitter {
   /**
    * Asks the arduino to send an I2C request to a device
    * @param slaveAddress The address of the I2C device
-   * @param {Array} bytes The bytes to send to the device
+   * @param bytes The bytes to send to the device
    */
 
-  sendI2CWriteRequest(slaveAddress, bytes) {
+  sendI2CWriteRequest(slaveAddress: number, bytes: number[]) {
     const data = [];
     /* istanbul ignore next */
     bytes = bytes || [];

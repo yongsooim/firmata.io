@@ -1,20 +1,21 @@
 <script lang='ts'>
   import webSerialPort from '../../lib/WebSerial';
   import { Firmata } from '../../lib/firmata/firmata';
+  import Select from './select';
 
   const baudrateList = [9600, 19200, 38400, 57600, 115200];
-    let selectedBaudrate = baudrateList[0];
+  let selectedBaudrate = baudrateList[3];
 
-    function updatebaudrate(baudrate: string) {
-      selectedBaudrate = Number.parseInt(baudrate)
-    }
+  function updatebaudrate(baudrate: string) {
+    selectedBaudrate = Number.parseInt(baudrate)
+  }
 
-    async function connect() {
-      await webSerialPort.connect()
-      let firmata = new Firmata(webSerialPort)
-      console.log(firmata)
+  async function connect() {
+    await webSerialPort.connect()
+    let firmata = new Firmata(webSerialPort)
+    console.log(firmata)
 
-    }
+  }
 </script>
 
 <div class='wrapper'>
@@ -23,13 +24,10 @@
 </a>
 </div>
 
-<div>Baudrate</div>
-<select on:change={(e) => {updatebaudrate(e.currentTarget.value)}}>
-  {#each baudrateList as baudrate}
-    <option>{baudrate}</option>
-  {/each}
-</select>
-
+<div class = 'select-title'>Board</div>
+<div class = 'select-wrapper'>
+  <Select id='boardselect' items={ baudrateList }  value={57600} selectType={'baudrate'} ></Select>
+</div>
 
 <style>
   .wrapper{
@@ -49,11 +47,18 @@
     padding: 0;
   }
 
-  select {
-    font-size: 23px;
-    height: 30px;
-    max-width: var(--sidebar-width);
-    min-width: var(--sidebar-width);
+  .select-title {
+    width: var(--sidebar-width);
+    margin-right:0px;
+    margin-left:16px;
+    padding-top : 10px;
+    padding-bottom : 0px;
+  }
+  .select-wrapper {
+    text-align: center;
+    width: var(--sidebar-width);
+    padding-top: 5px;
+    padding-bottom: 5px;
   }
 
 </style>

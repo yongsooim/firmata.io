@@ -11,6 +11,8 @@
     export let filterText = '';
 
     export let secondListOpen = false;
+    export let index = 0;
+    export let selectType = 'board'
 
     let lastType = '';
     let isHoverSecondList = false
@@ -46,8 +48,6 @@
         secondListOpen = !secondListOpen;
         
         lastType = e.type
-        console.log(item)
-
     }
 
     
@@ -79,11 +79,11 @@
     }
 
     .item:active {
-        background: var(--itemActiveBackground, #b9daff);
+        background: var(--itemActiveBackground, #71c6e0);
     }
 
     .item.active {
-        background: var(--itemIsActiveBG, #007aff);
+        background: var(--itemIsActiveBG,  #71c6e0);
         color: var(--itemIsActiveColor, #fff);
     }
 
@@ -93,7 +93,7 @@
 
 
     .item.hover:not(.active) {
-        background: var(--itemHoverBG, #e7f2ff);
+        background: var(--itemHoverBG,#51a6c0);
         color: var(--itemHoverColor, inherit);
     }
     
@@ -107,13 +107,12 @@
     bind:this = {thisItem}
     >
     {@html getOptionLabel(item, filterText)}
-    {#if secondListOpen}
+    {#if secondListOpen && selectType == 'board'}
     <svelte:component
         parent={thisItem}
         this={ListSecond}
-        items={firmwareList.get(item.value)}
+        items={firmwareList[index]}
     />
     {/if}
 
 </div>
-
