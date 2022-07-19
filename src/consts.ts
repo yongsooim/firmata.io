@@ -7,7 +7,6 @@ export const firmwareList = [
   ["imuduino", ["StandardFirmata.cpp", "StandardFirmata.with_bootloader.cpp"]],
   ["tinyduino", ["StandardFirmata.cpp", "Blink.cpp"]],
   ["leonardo", ["StandardFirmata.cpp", "Blink.cpp"]],
-  ["circuit-playground-classic", ["StandardFirmata.cpp", "Blink.cpp"]],
   ["arduboy", ["rund.cpp.leonardo"]],
   ["bqZum", ["Blink.cpp"]],
   ["duemilanove168", ["StandardFirmata.cpp", "Blink.cpp"]],
@@ -20,4 +19,4 @@ export const firmwareList = [
   ["sf-pro-micro", ["StandardFirmata-5v.cpp", "Blink-5v.cpp"]],
 ]
 
-export const baudrateList = [ 9600, 19200, 38400, 57600, 115200 ]
+export const baudrateList = [ '9600', '19200', '38400', '57600', '115200' ]

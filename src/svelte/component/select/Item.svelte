@@ -12,7 +12,8 @@
 
     export let secondListOpen = false;
     export let index = 0;
-    export let selectType = 'board'
+    export let selectType = null
+    export let hoverItemIndexSecond = 0;
 
     let lastType = '';
     let isHoverSecondList = false
@@ -107,12 +108,13 @@
     bind:this = {thisItem}
     >
     {@html getOptionLabel(item, filterText)}
-    {#if secondListOpen && selectType == 'board'}
-    <svelte:component
-        parent={thisItem}
-        this={ListSecond}
-        items={firmwareList[index]}
-    />
+    {#if selectType == 'board' && secondListOpen }
+        <svelte:component
+            parent={thisItem}
+            this={ListSecond}
+            items={firmwareList[index][1]}
+            bind:hoverItemIndexSecond={hoverItemIndexSecond}
+        />
     {/if}
 
 </div>

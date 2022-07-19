@@ -6,5 +6,16 @@
 </script>
 
 <Connect />
+
 <FirmwareList />
 <FlashButton />
+<div>
+</div>
+
+<style>
+  div {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+  }
+</style>

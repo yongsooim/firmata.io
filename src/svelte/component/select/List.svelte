@@ -2,6 +2,9 @@
     import { beforeUpdate, createEventDispatcher, onMount, tick } from 'svelte';
     import isOutOfViewport from './utils/isOutOfViewport';
     import ItemComponent from './Item.svelte';
+    import { selectedBoard, selectedHex } from '../../stores';
+    import { firmwareList } from '../../../consts';
+import { get } from 'svelte/store';
 
     const dispatch = createEventDispatcher();
 
@@ -18,6 +21,7 @@
     };
     export let getGroupHeaderLabel = null;
     export let hoverItemIndex = 0;
+    export let hoverItemIndexSecond = 0;
     export let value = undefined;
     export let optionIdentifier = 'value';
     export let hideEmptyState = false;
@@ -29,7 +33,7 @@
     export let listPlacement = null;
     export let listAutoWidth = null;
     export let listOffset = 5;
-    export let selectType = 'board'; // 'board' or 'baudrate'
+    export let selectType = null; // 'board' or 'baudrate'
 
     let isScrollingTimer = 0;
     let isScrolling = false;
@@ -37,10 +41,16 @@
 
     onMount(() => {
         if (items.length > 0 && !isMulti && value) {
-            const _hoverItemIndex = items.findIndex(
-                (item) => item[optionIdentifier] === value[optionIdentifier]
-            );
-
+            let  _hoverItemIndex
+            if(selectType == 'board') {
+                _hoverItemIndex = items.findIndex(
+                    (item) => item[optionIdentifier] === get(selectedBoard)
+                );
+            } else {
+                _hoverItemIndex = items.findIndex(
+                    (item) => item[optionIdentifier] === value[optionIdentifier]
+                );
+            }
             if (_hoverItemIndex) {
                 hoverItemIndex = _hoverItemIndex;
             }
@@ -83,7 +93,15 @@
     function handleClick(args) {
         const { item, i, event } = args;
         event.stopPropagation();
-        
+
+        const board = firmwareList[hoverItemIndex][0]
+        const hex = firmwareList[hoverItemIndex][1][hoverItemIndexSecond]
+
+        if(selectType == 'board') {
+            selectedBoard.set(board);
+            selectedHex.set(hex);
+        }
+        console.log(board, hex)
 
         if (
             value &&
@@ -97,6 +115,7 @@
         } else if (isItemSelectable(item)) {
             activeItemIndex = i;
             hoverItemIndex = i;
+            //handleSelect(item);
             handleSelect(item);
         }
     }
@@ -290,11 +309,13 @@
                 <svelte:component
                     this={Item}
                     {item}
+                    index = {hoverItemIndex}
                     {selectType}
                     {getOptionLabel}
                     isFirst={isItemFirst(i)}
                     isActive={isItemActive(item, value, optionIdentifier)}
                     isHover={isItemHover(hoverItemIndex, item, i, items)}
+                    bind:hoverItemIndexSecond={hoverItemIndexSecond}
                     isSelectable={isItemSelectable(item)} 
                     />
             </div>

@@ -10,9 +10,11 @@ function getHex(path: string) {
     })
 };
 
-export async function flash (board: string, path: string) {
-    const filecontents = await getHex(path)
+export async function flash (board: string, hex: string) {
+  const path = `/static/hex/${board}/${hex}.hex`
+  const filecontents = await getHex(path)
     console.log(path)
+    console.log(filecontents)
     let avrgirl = new AvrgirlArduino({ board: board, debug: false })
     avrgirl.flash(filecontents, (error) =>  {
       if (error) {

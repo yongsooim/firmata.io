@@ -14,7 +14,12 @@
   div {
     width: 100%;
   }
-
+  button {
+    width: var(--sidebar-width);
+    border: 0px;
+    height: 50px;
+    cursor: pointer;
+  }
   a {
     width: 100%;
     text-align: center;

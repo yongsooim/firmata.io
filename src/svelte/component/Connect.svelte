@@ -1,13 +1,13 @@
 <script lang='ts'>
   import webSerialPort from '../../lib/WebSerial';
   import { Firmata } from '../../lib/firmata/firmata';
+  import { baudrateList } from '../../consts'
   import Select from './select';
 
-  const baudrateList = [9600, 19200, 38400, 57600, 115200];
   let selectedBaudrate = baudrateList[3];
 
   function updatebaudrate(baudrate: string) {
-    selectedBaudrate = Number.parseInt(baudrate)
+    selectedBaudrate = baudrate
   }
 
   async function connect() {
@@ -24,9 +24,9 @@
 </a>
 </div>
 
-<div class = 'select-title'>Board</div>
+<div class = 'select-title'>Baudrate</div>
 <div class = 'select-wrapper'>
-  <Select id='boardselect' items={ baudrateList }  value={57600} selectType={'baudrate'} ></Select>
+  <Select id='boardselect' items={ baudrateList }  value={'57600'} selectType={'baudrate'} ></Select>
 </div>
 
 <style>

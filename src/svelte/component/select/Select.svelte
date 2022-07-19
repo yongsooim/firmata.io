@@ -7,6 +7,8 @@
     import _MultiSelection from './MultiSelection.svelte';
     import _ClearIcon from './ClearIcon.svelte';
     import debounce from './utils/debounce';
+    import { selectedBoard, selectedHex } from '../../stores';
+    import { get } from 'svelte/store';
 
     const dispatch = createEventDispatcher();
 
@@ -19,6 +21,7 @@
     export let isCreatable = false;
     export let isFocused = false;
     export let value = null;
+    export let valueSecond = null;
     export let filterText = '';
     export let placeholder = 'Select...';
     export let placeholderAlwaysShow = false;
@@ -66,7 +69,7 @@
 
     export let isSearchable = true;
     export let inputStyles = '';
-    export let isClearable = true;
+    export let isClearable = false;
     export let isWaiting = false;
     export let listPlacement = 'auto';
     export let listOpen = false;
@@ -89,7 +92,7 @@
     export let Selection = _Selection;
     export let MultiSelection = _MultiSelection;
 
-    export let selectType = 'board';
+    export let selectType = 'baudrate';
 
     function filterMethod(args) {
         if (args.loadOptions && args.filterText.length > 0) return;
@@ -535,6 +538,7 @@
     }
 
     function handleWindowEvent(event) {
+        
         if (!container) return;
         const eventTarget =
             event.path && event.path.length > 0 ? event.path[0] : event.target;
@@ -562,6 +566,9 @@
 
     onMount(() => {
         if (isFocused && input) input.focus();
+        if(selectType == 'board') {
+            value = 'uno/StandardFirmata.cpp'
+        }
     });
 
     $: listProps = {
@@ -592,10 +599,18 @@
                 if (isMulti) {
                     value = value ? value.concat([item]) : [item];
                 } else {
-                    value = item;
+                    if(selectType == 'board') {
+                        value = `${get(selectedBoard)}/${get(selectedHex)}`
+                    } else {
+                        value = item;
+                    }
                 }
 
                 value = value;
+
+                if(selectType == 'board') {
+                    valueSecond = get(selectedHex)
+                }
 
                 setTimeout(() => {
                     listOpen = false;
@@ -903,6 +918,7 @@
         style={inputStyles}
         disabled={isDisabled} />
 
+        
     {#if !isMulti && showSelectedItem}
         <div class="selectedItem" on:focus={handleFocus}>
             <svelte:component

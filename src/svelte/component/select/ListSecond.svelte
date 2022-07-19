@@ -21,6 +21,7 @@
     export let listPlacement = null;
     export let listAutoWidth = null;
     export let listOffset = 5;
+    export let hoverItemIndexSecond = 0;
 
     let isScrollingTimer = 0;
     let isScrolling = false;
@@ -35,6 +36,7 @@
             if (_hoverItemIndex) {
                 hoverItemIndex = _hoverItemIndex;
             }
+
         }
 
         scrollToActiveItem('active');
@@ -69,14 +71,11 @@
     function handleHover(i, e) {
         if (isScrolling) return;
         hoverItemIndex = i;
-
-        console.log(items[i])
+        hoverItemIndexSecond = i;
     }
 
     function handleClick(args) {
         const { item, i, event } = args;
-
-        //event.stopPropagation();
 
         if (
             value &&
