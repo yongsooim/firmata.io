@@ -11,7 +11,7 @@
   }
 
   async function connect() {
-    await webSerialPort.connect()
+    await webSerialPort.connect('usb')
     let firmata = new Firmata(webSerialPort)
     console.log(firmata)
 

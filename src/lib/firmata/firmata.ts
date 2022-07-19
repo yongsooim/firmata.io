@@ -4,8 +4,6 @@ import Emitter from "events";
 // Internal Dependencies
 import * as Encoder7Bit from "./encoder7bit";
 import { OneWireUtils } from "./onewireutils";
-
-import {Buffer} from 'buffer'
 import type { WebSerialPort } from '../WebSerial';
 
 declare type Pin = {

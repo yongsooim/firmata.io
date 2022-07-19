@@ -7,7 +7,7 @@ export class WebSerialPort extends Emitter {
   writer: WritableStreamDefaultWriter | undefined
   async connect (target? : 'usb' | 'serial'){
     try {
-      if(target === undefined) {
+      if(target === 'usb') {
         let device = await navigator.usb.requestDevice({ filters: [] })
         let ports = await navigator.serial.getPorts()
         for(let i = 0 ; i < ports.length ; i++) {

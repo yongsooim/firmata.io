@@ -19,27 +19,31 @@
   
     <title>firmata.io</title>
   </head>
-  <body>
+  <body> 
+    <div id='app'>
 
-    <sidebar id='sidebar'> 
-      <div id="sidebar-internal"></div>     
-    </sidebar>
+      
+      <sidebar id='sidebar'> 
+        <div id="sidebar-internal"></div>     
+      </sidebar>
 
-    <main id='main'>
-    </main>
+      <main id='main'>
+      </main>
 
-    <footer id='footer'>
-      <p>
-        This page is hosted on <a href='https://pages.github.com/' target='_blank'>GitHub pages</a>.
-        Visit GitHub Repo!
-        <a href="https://github.com/yongsooim/firmata.io/" target='_blank'><img src='./src/static/image/gh.png' alt='github logo' width='20px' height='20px'></a>
-      </p>
-    </footer>
+      <footer id='footer'>
+        <p>
+          This page is hosted on <a href='https://pages.github.com/' target='_blank'>GitHub pages</a>.
+          Visit GitHub Repo!
+          <a href="https://github.com/yongsooim/firmata.io/" target='_blank'><img src='./src/static/image/gh.png' alt='github logo' width='20px' height='20px'></a>
+        </p>
+      </footer>
 
-    <script defer type="module" src="/src/index.ts"></script>
-    <script defer src = "./static/js/avrgirl-arduino.global.min.js"></script>
-    <!--
-    <script defer src = "./static/js/firmata.min.js"></script>
-    -->
+      <script defer type="module" src="/src/index.ts"></script>
+      <script defer src = "./static/js/avrgirl-arduino.global.js"></script>
+      <!--
+      <script defer src = "./static/js/avrgirl-arduino.global.min.js"></script>
+      <script defer src = "./static/js/firmata.min.js"></script>
+      -->
+    </div>
   </body>
 </html>

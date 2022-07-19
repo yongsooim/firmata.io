@@ -1,4 +1,3 @@
-
 function getHex(path: string) {
     return new Promise<ArrayBuffer>(async (resolve, reject) => {
         try {
