@@ -10,10 +10,6 @@ const main = new Main({
   target: document.getElementById('main')
 })
 
-const popup = new Popup({
+export const popup = new Popup({
   target: document.getElementById('popup')
 })
-
-export function showPopup(message: string) {
-  popup.showPopup(message)
-}

@@ -686,6 +686,15 @@
         isFocused,
         listOpen
     );
+
+    export function open() {
+        listOpen = true;        
+    }
+
+    export function toggle() {
+        listOpen = !listOpen;        
+    }
+
 </script>
 
 <style>

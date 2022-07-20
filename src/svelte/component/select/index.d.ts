@@ -61,6 +61,7 @@ export interface SelectProps {
 
 declare class Select extends SvelteComponent {
   $$prop_def: SelectProps;
+  open: () => void;
 }
 
 export default Select;

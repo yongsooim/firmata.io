@@ -1,19 +1,30 @@
 <script lang='ts'>
   export let message = '';
-  let style  : 'hidden' | 'visible'= 'hidden'
+  let visibility  : 'hidden' | 'visible'= 'hidden'
   let disappearTimer: NodeJS.Timeout;
-  
-  export function showPopup(messageToShow: string) {
+  let color = 'black'
+  let opacity = 0.0
+
+  export function show(messageToShow: string, duration?: number) {
     if(disappearTimer) {
       clearTimeout(disappearTimer)
     }
 
-    style = 'visible'
-    message = messageToShow;
+    visibility = 'visible'
+    opacity = 0.8
+    message = messageToShow
     
     disappearTimer = setTimeout(() => {
-      style = 'hidden'
+      opacity = 0.0
+      visibility = 'hidden'
+
     }, 3000)
+  }
+
+  function close() {
+    opacity = 0.0
+    visibility = 'hidden'
+
   }
 
   window.addEventListener('error', e => {
@@ -24,10 +35,9 @@
     console.log(e)
   })
   
-  showPopup('hi')
 </script>
 
-<div style="visibility: {style};">
+<div style="visibility: {visibility}; opacity:{opacity}" on:click={close}>
   <p>
     {message}
   </p>
@@ -35,20 +45,24 @@
 
 <style>
   div {
-    width: 200px;
-    height: 100px;
-    background-color: aliceblue;
+    width: 400px;
+    height: 200px;
+    background-color: #dcdcdcaa;
     border: 1px;
     border-radius: 10px;
     position: fixed;
-    top: 50%;
-    left: 50%;
-    z-index: 5000;
+    top: calc(50vh - 100px); 
+    left: calc(50vw - 200px);
+    z-index: 100;
+    text-align: center;
+    transition: all 0.3s ease-out;
   }
   
   p {
+    font-size: 50px;
     align-items: center;
     align-content: center;
     text-align: center;
+    user-select: none;
   }
 </style>

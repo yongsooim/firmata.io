@@ -6,8 +6,8 @@
 </p>
 
 <p>
-    <!--
     <img src='./static/image/ArduinoUno.svg' alt='arduino uno'>
+    <!--
     -->
 </p>
 
