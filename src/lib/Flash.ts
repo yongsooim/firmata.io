@@ -1,3 +1,5 @@
+//import AvrgirlArduino from 'avrgirl-arduino/avrgirl-arduino-browser'
+
 function getHex(path: string) {
     return new Promise<ArrayBuffer>(async (resolve, reject) => {
         try {
@@ -15,7 +17,7 @@ export async function flash (board: string, hex: string) {
     console.log(path)
     console.log(filecontents)
     let avrgirl = new AvrgirlArduino({ board: board, debug: false })
-    avrgirl.flash(filecontents, (error) =>  {
+    avrgirl.flash(filecontents, (error) => {
       if (error) {
         console.error(error)
       } else {

@@ -244,7 +244,7 @@ import { get } from 'svelte/store';
             listPlacement === 'top' ||
             (listPlacement === 'auto' && isOutOfViewport(parent, container).bottom)
         ) {
-            listStyle += `bottom:${height + listOffset}px;`;
+            listStyle += `bottom:${0}px;`;
         } else {
             listStyle += `top:${y }px;`;
         }
@@ -311,6 +311,7 @@ import { get } from 'svelte/store';
                     {item}
                     index = {hoverItemIndex}
                     {selectType}
+                    {parent}
                     {getOptionLabel}
                     isFirst={isItemFirst(i)}
                     isActive={isItemActive(item, value, optionIdentifier)}

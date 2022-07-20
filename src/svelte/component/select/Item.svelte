@@ -9,6 +9,7 @@
     export let getOptionLabel = undefined;
     export let item = undefined;
     export let filterText = '';
+    export let parent = null;
 
     export let secondListOpen = false;
     export let index = 0;
@@ -111,6 +112,7 @@
     {#if selectType == 'board' && secondListOpen }
         <svelte:component
             parent={thisItem}
+            grandParent={parent}
             this={ListSecond}
             items={firmwareList[index][1]}
             bind:hoverItemIndexSecond={hoverItemIndexSecond}

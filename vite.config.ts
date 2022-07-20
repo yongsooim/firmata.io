@@ -11,7 +11,8 @@ import rollupNodePolyFill from 'rollup-plugin-node-polyfills'
 // https://vitejs.dev/config/
 export default defineConfig({
   define: {
-    'process.env': process.env
+    'process.env': process.env,
+    '__filename': `''`
   },
   plugins: [
     svelte(),
@@ -68,6 +69,7 @@ export default defineConfig({
         tty: 'rollup-plugin-node-polyfills/polyfills/tty',
         domain: 'rollup-plugin-node-polyfills/polyfills/domain',
         __filename: 'rollup-plugin-node-polyfills/polyfills/filename',
+        fs: 'rollup-plugin-node-polyfills/polyfills/fs',
     }
 },
 optimizeDeps: {

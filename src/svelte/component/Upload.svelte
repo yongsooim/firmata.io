@@ -31,7 +31,7 @@
 </div>
 
 <div class = 'button-wrapper'>
-<button on:click={clickHandler}>
+<button id='uploadButton' on:click={clickHandler}>
   ⚡ Upload
 </button>
 </div>
@@ -52,11 +52,16 @@
     padding-bottom: 0px;
   }
 
-  button {
+  #uploadButton {
     width: var(--sidebar-width);
     border: 0px;
-    height: 50px;
+    height: var(--height);
     cursor: pointer;
+    font-size: 20px;
+  }
+
+  #uploadButton:hover {
+    background-color: #71c6e0;
   }
   
 

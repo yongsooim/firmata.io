@@ -1,12 +1,17 @@
 <script lang='ts'>
   export let message = '';
-  let style  : 'hidden' | 'none'= 'hidden'
+  let style  : 'hidden' | 'visible'= 'hidden'
+  let disappearTimer: NodeJS.Timeout;
   
   export function showPopup(messageToShow: string) {
-    message = messageToShow;
-    style = 'none'
+    if(disappearTimer) {
+      clearTimeout(disappearTimer)
+    }
 
-    setTimeout(() => {
+    style = 'visible'
+    message = messageToShow;
+    
+    disappearTimer = setTimeout(() => {
       style = 'hidden'
     }, 3000)
   }
@@ -23,13 +28,13 @@
 </script>
 
 <div style="visibility: {style};">
-  {message}
+  <p>
+    {message}
+  </p>
 </div>
 
 <style>
   div {
-    align-items: center;
-    align-content: center;
     width: 200px;
     height: 100px;
     background-color: aliceblue;
@@ -39,5 +44,11 @@
     top: 50%;
     left: 50%;
     z-index: 5000;
+  }
+  
+  p {
+    align-items: center;
+    align-content: center;
+    text-align: center;
   }
 </style>

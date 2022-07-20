@@ -11,5 +11,9 @@ const main = new Main({
 })
 
 const popup = new Popup({
-  target: document.getElementById('app')
+  target: document.getElementById('popup')
 })
+
+export function showPopup(message: string) {
+  popup.showPopup(message)
+}

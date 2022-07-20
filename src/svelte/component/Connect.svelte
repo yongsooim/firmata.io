@@ -18,33 +18,33 @@
   }
 </script>
 
-<div class='wrapper'>
-<a id = 'connectButton' class="nav-link" on:click={connect} href={"#"}>
-  Connect
-</a>
-</div>
 
-<div class = 'select-title'>Baudrate</div>
+
+<div class = 'select-title'>Select baudrate</div>
 <div class = 'select-wrapper'>
   <Select id='boardselect' items={ baudrateList }  value={'57600'} selectType={'baudrate'} ></Select>
 </div>
 
+<div class='wrapper'>
+  <button id = 'connectButton' on:click={connect}>
+    ⇌ Connect
+  </button>
+  </div>
+
 <style>
+  #connectButton {
+    width: var(--sidebar-width);
+    border: 0px;
+    height: var(--height);
+    cursor: pointer;
+    font-size: 20px;
+  }
+  #connectButton:hover {
+    background-color: #71c6e0;
+  }
   .wrapper{
     background-color: grey;
     width: var(--sidebar-width);
-  }
-  a:hover {
-    background-color: #f5f5f5;
-  }
-
-  a {
-    width:var(--sidebar-width);
-  }
-
-  p {
-    margin: 0;
-    padding: 0;
   }
 
   .select-title {
@@ -58,7 +58,6 @@
     text-align: center;
     width: var(--sidebar-width);
     padding-top: 5px;
-    padding-bottom: 5px;
   }
 
 </style>

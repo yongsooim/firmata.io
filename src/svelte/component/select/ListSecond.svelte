@@ -18,6 +18,7 @@
     export let activeItemIndex = 0;
     export let filterText = '';
     export let parent = null;
+    export let grandParent = null;
     export let listPlacement = null;
     export let listAutoWidth = null;
     export let listOffset = 5;
