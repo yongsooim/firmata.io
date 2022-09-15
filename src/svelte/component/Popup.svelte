@@ -1,7 +1,7 @@
 <script lang='ts'>
   export let message = '';
   let visibility  : 'hidden' | 'visible'= 'hidden'
-  let disappearTimer: NodeJS.Timeout;
+  let disappearTimer: ReturnType<typeof setTimeout>
   let color = 'black'
   let opacity = 0.0
 
